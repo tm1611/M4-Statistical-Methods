@@ -1,0 +1,249 @@
+---
+title: 'Forecasting: Principles and Practice'
+author: "Timo Meiendresch"
+date: "22/05/2019"
+knit: (function(input_file, encoding) {
+  out_dir <- 'html_outputs';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir, 'Forecasting_PP.html'))})
+---
+
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
+```
+
+```{r, message=FALSE}
+# libraries
+library("ggplot2")
+library("forecast")
+library("fpp2")
+library("GGally")
+```
+
+# Introduction
+The following document contains my own notes of the book
+
+> Hyndman, R. J., & Athanasopoulos, G. (2018) Forecasting: principles and practice, 2nd edition, OTexts: Melbourne, Australia.  
+
+Notes are taken with regard to what is important to me and my own objectives. Therefore some chapters are not fully covered, others are excluded entirely. 
+
+# Chapter 1: Getting started
+
+- Book focuses on reliable methods for producing forecasts with emphasis on replicable and testable methods that have been shown to work.
+
+Predictability of events or quantities depends on various factors, which can be addressed with the following three questions:
+
+- how well do we understand the factors that contribute to the realization?
+- how much data is available?
+- can the forecast affect the thing we are trying to forecast?
+
+In general, there are clear limits of what a forecast can achieve and one should be aware of its limitations. Also, environments are changing constantly and some of those changes are not reflected in the data. However, forecasting can assist in detecting the characteristics of the environment that is changing which is helpful as well.
+
+Different forecasting situations according to
+
+- time horizons
+- factors determining outcomes
+- types of data patterns
+
+require different forecasting techniques. Choice of methods depends on 
+
+- data availability
+- predictability of the quantitiy to be forecast.
+
+### Forecasting, planning and goals
+
+- **Forecasting:** Predicting the future as accurately as possible, given all of the information available, including historical data and knowledge of any future events that might impact the forecasts.
+- **Goals:** What you would like to happen. Goals should be linked to forecasts and plans.
+- **Planning:** Response to forecasts and goals. Determining the appropriate actions that are required to make your forecasts match your goals.
+
+Difference in time horizon of the forecast into short-term forecasts, medium-term forecasts, and long-term forecasts
+
+Appropriate forecasting method largely depends on what data are available. 
+
+- No data: qualitative forecasting methods 
+
+Conditions for quantitative forecasting: 
+
+1. Numerical information about the past is available
+2. Reasonable to assume that some aspects of the past patterns will continue into the future.
+
+### Time series forecasting
+Anything that is observed sequentially over time is a time series. Here we will focus on time series that are observed at regular intervals over time. The objective is to estimate how the sequence of observations will continue into the future. The simplest time series forecasting methods use only information on the variable to be forecasted and make no attempt to discover the factors that affect its behaviour.
+
+### Predictor variables and time series forecasting
+Model for electricity demand with predictor variables might be of the form: 
+$$ED = f(current\:temperature, \:strength\:of\:economy,\:population, \\ \:time\:of\:day,\:day\:of\:week,\:error)  $$
+
+The relationship is not exact as there will always be changes that cannot be accounted for by the predictor variables.
+
+A suitable time series equation for this problem without predictors may be of the form 
+
+$$ED_{t+1} = f(ED_t, ED_{t-1}, ...., error)$$
+
+A third type of model combines the features of the above two models. It may be of the form
+
+$$ED_{t+1} = f(ED_t, \: current \: temperature, \: time \: of \: day,\: day \: of \: week,\: error$$
+
+which is a type of "mixed model". They are known as dynamic regression models, panel data models, longitudinal models, transfer function models, and linear system models (if f is linear).
+
+Including predictor variables is useful if we want to incorporate those information but there reasons a forecaster might select a time series model rather than an explanatory or mixed model: 
+
+1. System may not be understood or relationship is difficult to capture
+2. Necessary to know or forecast future values of the various predictors
+3. Main concern may be to predict what will happen, not to know why it happens.
+4. Time series model may give more accurate forecasts than an explanatory or mixed model. 
+
+### Basic steps in a forecasting task
+Usually involves five basic steps
+
+Step 1: Problem definition
+
+- Define problem, objectives, who requires the forecast, how forecasting function fits within the organisation
+- Check needs and requirements with everyone who will be involved in collecting data, maintaining databases, and using the forecasts for future planning
+
+Step 2: Gathering information
+
+- Statistical data
+- Cumulated expertise
+
+Step 3: Preliminary (exploratory) analysis
+
+- Always start with graphing the data 
+- Consistent patterns like trend, seasonalities, cycles, outliers?
+
+Step 4: Choosing and fitting models
+
+- Best model depends on the availability of historical data, strength of relationships (predictor variables and forecast variable)
+- Common to compare various models
+
+Step 5: Using and evaluating a forecasting model
+
+- Assess accuracy of forecasts.
+
+### Statistical perspective
+
+Realization of forecast is unknown at the time of the forecast. Hence, we think of it as a random variable. In most contexts, variation associated with forecast will shrink as event approaches. 
+
+When obtaining a forecast, we are estimating the middle of the range of possible values of the random variable. The prediction interval gives a range of values the random variable could take with high probability. The set of values that the random variable could take, along with their relative probabilities, is known as the probability distribution, named **forecast distribution**.
+
+The "forecast" is the mean - or sometimes median - of the forecast distribution, indicated as $\hat{y}$. 
+
+# Chapter 2: Time series graphics
+
+- First thing to do: Plot the data
+
+A time series can be thought of as a list of numbers along with information about what time those numbers were recorded.
+
+- Store data as `ts()` object in R
+
+```{r}
+nums <- c(123,39,78, 52,110)
+y <- ts(nums, start=2012)
+
+# frequency?
+y <- ts(nums, start=2012, frequency=4)
+```
+
+```{r table2, echo=FALSE, message=FALSE, warnings=FALSE, results="asis"}
+tabl <- "
+| Data    | frequency |
+|---------|-----------|
+| Annual  | 1         |
+| Quarterly | 4       |
+| Monthly | 12        |
+| Weekly  | 52        | 
+"
+cat(tabl)
+```
+
+```{r}
+autoplot(melsyd[,"Economy.Class"]) +
+  ggtitle("Economy class passengers: Melbourne-Sydney") +
+  xlab("Year") +
+  ylab("Thousands")
+```
+
+Features: 
+
+- no passengers carried in 1989 due to a dispute
+- reduced load due to a trial in 1992
+- ...
+
+These features have to be detected and accounted for.
+
+```{r}
+autoplot(a10) +
+  ggtitle("Antidiabetic drug sales") +
+  ylab("$ million") +
+  xlab("Year")
+
+```
+
+- clear trend
+- seasonality (increasing in magnitude)
+
+### Time series patterns
+
+- Trend: long-term increase or decrease in the data. Might also be changing over time.
+- Seasonal: Pattern with fixed and known frequency
+- Cyclic: Rises and falls which are not of a fixed frequency
+
+```{r}
+# visualize seasonal pattern
+ggseasonplot(a10, year.labels = TRUE, year.labels.left=TRUE) + 
+  ylab("$ million") + 
+  ggtitle("Seasonal plot: antidiabetic drug sales")
+
+# alternatively
+ggseasonplot(a10, polar=TRUE) +
+  ylab("$ million") +
+  ggtitle("Polar seasonal plot: antidiabetic drug sales")
+
+# emphasise seasonal patterns
+ggsubseriesplot(a10) +
+  ylab("$ million") +
+  ggtitle("Seasonal subseries plot: antidiabetic drug sales")
+
+```
+
+### Scatterplots
+
+```{r}
+autoplot(elecdemand[,c("Demand","Temperature")], facets=TRUE) +
+  xlab("Year: 2014") + ylab("") +
+  ggtitle("Half-hourly electricity demand: Victoria, Australia")
+
+# relationship demand and temperature
+qplot(Temperature, Demand, data=as.data.frame(elecdemand)) +
+  ylab("Demand (GW)") + xlab("Temperature (Celsius)")
+
+```
+
+Also, it is common to compute **correlations**, i.e. the correlation coefficient r. The correlation coefficient measures only the linear relationship.
+
+### Scatterplot matrics
+
+```{r}
+autoplot(visnights[,1:5], facets=TRUE) +
+  ylab("Number of visitor nights each quarter (millions)")
+
+# check all relationships
+#GGally::ggpairs(as.data.frame(visnights[,1:5]))
+```
+
+### Lagged plots
+
+```{r}
+beer2 <- window(ausbeer, start=1992)
+gglagplot(beer2)
+```
+
+### Autocorrelation
+
+
+
+
+
+
