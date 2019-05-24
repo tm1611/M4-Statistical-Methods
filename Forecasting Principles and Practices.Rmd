@@ -52,7 +52,7 @@ require different forecasting techniques. Choice of methods depends on
 - data availability
 - predictability of the quantitiy to be forecast.
 
-### Forecasting, planning and goals
+#### Forecasting, planning and goals
 
 - **Forecasting:** Predicting the future as accurately as possible, given all of the information available, including historical data and knowledge of any future events that might impact the forecasts.
 - **Goals:** What you would like to happen. Goals should be linked to forecasts and plans.
@@ -69,7 +69,7 @@ Conditions for quantitative forecasting:
 1. Numerical information about the past is available
 2. Reasonable to assume that some aspects of the past patterns will continue into the future.
 
-### Time series forecasting
+#### Time series forecasting
 Anything that is observed sequentially over time is a time series. Here we will focus on time series that are observed at regular intervals over time. The objective is to estimate how the sequence of observations will continue into the future. The simplest time series forecasting methods use only information on the variable to be forecasted and make no attempt to discover the factors that affect its behaviour.
 
 ### Predictor variables and time series forecasting
@@ -122,7 +122,7 @@ Step 5: Using and evaluating a forecasting model
 
 - Assess accuracy of forecasts.
 
-### Statistical perspective
+#### Statistical perspective
 
 Realization of forecast is unknown at the time of the forecast. Hence, we think of it as a random variable. In most contexts, variation associated with forecast will shrink as event approaches. 
 
@@ -184,7 +184,7 @@ autoplot(a10) +
 - clear trend
 - seasonality (increasing in magnitude)
 
-### Time series patterns
+#### Time series patterns
 
 - Trend: long-term increase or decrease in the data. Might also be changing over time.
 - Seasonal: Pattern with fixed and known frequency
@@ -208,7 +208,7 @@ ggsubseriesplot(a10) +
 
 ```
 
-### Scatterplots
+#### Scatterplots
 
 ```{r}
 autoplot(elecdemand[,c("Demand","Temperature")], facets=TRUE) +
@@ -233,15 +233,246 @@ autoplot(visnights[,1:5], facets=TRUE) +
 #GGally::ggpairs(as.data.frame(visnights[,1:5]))
 ```
 
-### Lagged plots
+#### Lagged plots
 
 ```{r}
 beer2 <- window(ausbeer, start=1992)
 gglagplot(beer2)
 ```
 
-### Autocorrelation
+#### Autocorrelation
+Correlation measures the extent of a linear relationship between two variables, atuocorrealtion measures the linear realtionship between lagged values of a time series. 
 
+```{r}
+# correlogramm
+ggAcf(beer2)
+
+```
+
+Effects on ACF:
+
+- Trend: ACF for small lags tend to be large and positive. ACF tend to have positive values that slowly decrease as the lags increas
+- Seasonal: ACF larger for seasonal lags (multiples of seasonal frequency)
+- Trend and seasonal: Combination of these effects
+
+```{r}
+aelec <- window(elec, start=1980)
+autoplot(aelec) + 
+  xlab("Year") +
+  ylab("GWh")
+
+ggAcf(aelec, lag=48)
+
+```
+
+
+### White noise
+Time Series that show no autocorrelation are called white noise. Sum of white noise realizations is called random walk
+
+```{r}
+set.seed(30)
+y <- ts(rnorm(50))
+autoplot(y) +
+  ggtitle("White Noise")
+
+ggAcf(y)
+
+```
+
+#### Exercises
+
+```{r}
+# gold
+autoplot(gold)
+frequency(gold)
+gold[which.max(gold)]
+
+# read in the data
+tute1 <- read.csv("data/tute1.csv", header=TRUE)
+
+# convert to time series 
+my_ts <- ts(tute1[,-1], start=1981, frequency=4)
+
+autoplot(my_ts, facets=T)
+
+# retail
+retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+my_ts2 <- ts(retail[,"A3349873A"],
+             frequency=12,
+             start=c(1982,4))
+
+autoplot(my_ts2)
+ggseasonplot(my_ts2)
+ggseasonplot(my_ts2, polar = TRUE)
+ggsubseriesplot(my_ts2)
+gglagplot(my_ts2)
+ggAcf(my_ts2)
+
+dj_d <- diff(dj)
+autoplot(dj_d)
+ggAcf(dj_d)
+```
+
+# Chapter 3: The forecaster's toolbox
+
+#### Average method
+Forecats of all future values are equal to the average of historical data
+
+$$ \hat{y}_{T+h|T} = \bar{y} $$
+
+```{r}
+# fc for white noise
+fc_y <- meanf(y, h=10)
+autoplot(fc_y)
+```
+
+#### Naive method
+forecast is simply the value of the last observation
+
+$$ \hat{y}_{T+h|T} = y_T $$
+This method works surprisingly well for many economic and financial time series
+
+```{r}
+fc2_y <- naive(y,h=10)
+autoplot(fc2_y)
+```
+
+#### Seasonal naive method
+Set each forecast to be equal to the last observed value from the same season 
+
+$$\hat{y}_{T+h|T} = y_{T+h-m (k+1)}$$
+where m is the seasonal period, and k is the integer part of $(h-1)/m$
+
+```{r}
+fc_my_ts2 <- snaive(my_ts2, h=10)
+```
+
+#### Drift method
+Variation of naive method to allow the forecast to increase or decrease over time. Equivalent to drawing a line between the first and last observation, and extrapolating it into the future
+
+
+#### Examples
+```{r}
+# Plot some forecasts
+autoplot(beer2) +
+  autolayer(meanf(beer2, h=11),
+    series="Mean", PI=FALSE) +
+  autolayer(naive(beer2, h=11),
+    series="Naïve", PI=FALSE) +
+  autolayer(snaive(beer2, h=11),
+    series="Seasonal naïve", PI=FALSE) +
+  ggtitle("Forecasts for quarterly beer production") +
+  xlab("Year") + ylab("Megalitres") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# non-seasonal methods
+autoplot(goog200) +
+  autolayer(meanf(goog200, h=40),
+    series="Mean", PI=FALSE) +
+  autolayer(rwf(goog200, h=40),
+    series="Naïve", PI=FALSE) +
+  autolayer(rwf(goog200, drift=TRUE, h=40),
+    series="Drift", PI=FALSE) +
+  ggtitle("Google stock (daily ending 6 Dec 2013)") +
+  xlab("Day") + ylab("Closing Price (US$)") +
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+Often, these forecasting methods serve as benchmarks rather than the method of choice.
+
+## Transformations and adjustments
+Use transformations and adjustmens to simplify the patterns in the historical data by removing known sources of variation or making the pattern more consistens across the whole data set. 
+
+#### Calendar adjustments
+
+```{r}
+# Problem: different days of month
+dframe <- cbind(Monthly=milk,
+                DailyAverage = milk/monthdays(milk))
+autoplot(dframe, facet=T) +
+  xlab("Years") + 
+  ylab("Pounds") +
+  ggtitle("Milk production per cow")
+
+```
+
+#### Population adjustments
+Adjust data to give per-capita data. Easier to interpret and compare and eliminates the effect of population changes.
+
+#### Inflation adjustments
+Use a price index to account for changes of purchasing power. With price index $z_t$ and $y_t$ denotes the original house price in year t,
+
+$$ x_t = y_t / z_t \cdot z_{year} $$
+
+A common price index is the Consumer Price Index (CPI).
+
+#### Mathematical transformations
+Variation that increases or decreases with the level of that series can be approached with transformations like the log-transformation. Other transformations: 
+
+- power transformations
+- Box-Cox transformations
+
+```{r}
+lambda <- BoxCox.lambda(elec)
+autoplot(BoxCox(elec, lambda))
+```
+
+Afterwards, the inverse of the Box.Cox transformation (`InvBoxCox()`) should be applied to obtain the initial scale. 
+
+#### Bias adjustments
+Back-transformed point forecast such as Box-Cox transformation will usually be the median of the forecast distritbution (assuming that the distibribution on the transformed space is symmetric). If you want to add up different forecasts and combine them this should be adjusted (bias-adjusted). Medians do not add up, whereas means do.
+
+```{r}
+fc <- rwf(eggs, drift=TRUE, lambda=0, h=50, level=80)
+fc2 <- rwf(eggs, drift=TRUE, lambda=0, h=50, level=80,
+  biasadj=TRUE)
+autoplot(eggs) +
+  autolayer(fc, series="Simple back transformation") +
+  autolayer(fc2, series="Bias adjusted", PI=FALSE) +
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+If you want your forecats to be means rather than medians, use the argument `biasadj=TRUE` when you select your Box-Cox transformation parameter.
+
+## Residual diagnostics
+Residuals are equal to the difference between the observations and the corresponding fitted values: 
+
+$$e_t = y_t - \hat{y}_t$$
+They are useful to check whether a model has captured the information in the data (only white noise should be left in residuals). A good forecasting method yields residuals with the following properties:
+
+- Residuals are uncorrelated. 
+- Residuals have zero mean. 
+
+In addition, it is useful but not necessary that: 
+
+- Residuals have constant variance
+- Residuals are normally distributed.
+
+The latter properties make the calculation of prediction intervals easier. Alternative approach to obtain prediction intervals may be necessary. 
+
+```{r}
+autoplot(goog200) +
+  xlab("Day") + ylab("Closing Price (US$)") +
+  ggtitle("Google Stock (daily ending 6 December 2013)")
+
+# residuals 
+res <- residuals(naive(goog200))
+autoplot(res) + xlab("Day") + ylab("") +
+  ggtitle("Residuals from naïve method")
+
+# Histogram
+gghistogram(res) + ggtitle("Histogram of residuals")
+
+ggAcf(res) + ggtitle("ACF of residuals")
+```
+
+#### Portmanteau test for autocorrelation
+A test for a group of autocorrelations is called a portmanteau test. Common tests are the **Box-Pierce Test** and the **Ljung-Box test**. 
+These are tesing whether the first h autocorrelations are significantly different from what would be expected from a white nois process. 
+
+Not significant results mean they are not distinguishable from a white noise process. Use the function `checkresiduals()`to produce a time plot of the residuals, ACF, histogram and a Ljung-Box test altogether.
+
+## Evaluating forecast accuracy
 
 
 
