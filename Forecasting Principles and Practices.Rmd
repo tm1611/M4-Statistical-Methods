@@ -473,6 +473,185 @@ These are tesing whether the first h autocorrelations are significantly differen
 Not significant results mean they are not distinguishable from a white noise process. Use the function `checkresiduals()`to produce a time plot of the residuals, ACF, histogram and a Ljung-Box test altogether.
 
 ## Evaluating forecast accuracy
+Accuracy of forecasts can only be determined by considering how well a model performs on new data that were not used when fitting the model.
+
+- Common practice to separate the available data into two portions, **training** and **test** data, where the training data is used to estimate any parameters of a forecasting method and the test data is used to evaluate its accuracy. Size of the test data is typically about 20% of the total sample.
+
+Note:
+
+- model which fis the training data well is not necessarily a good forecasting model
+- Perfect fit can always be obtained by using a model with enough parameters.
+- Over-fitting a model is just as bad as failing systematic patterns in the data.
+
+#### Functions to subset a time series
+```{r}
+# window
+my_beer <- window(ausbeer, start=1995)
+str(ausbeer)
+str(my_beer)
+
+# subset
+my_beer2 <- subset(ausbeer, start=length(ausbeer)-4*5)
+str(my_beer2)
+
+#
+my_beer3 <- subset(ausbeer, quarter=1)
+head(my_beer3)
+```
+
+#### Forecast errors
+Difference between actual realization and its forecast. Error may mean unpredictable part of an observation
+
+$$e_{T+h} = y_{T+h} - \hat{y}_{T+h|T}$$
+
+Different from residuals because:
+
+- Residuals are calculated on the training set while forecast errors are calculated on the test set. 
+- Residuals are based on one-step forecasts while forecast errors can involve multi-step forecasts
+
+#### Scale-dependent errors
+scale-dependent errors can not be used to make comparisons between series of different units.
+
+Common scale-dependent measures:
+
+- Mean absolute error (MAE): $MAE=mean(|e_t|)$
+- Root mean squared error (RMSE): $\sqrt{mean(e_t^2)}$
+
+FOrecast method minimising the MAE will lead to forecasts of the median, while minimising the RMSE will lead to forecasts of the mean. 
+
+#### Percentage errors
+Advantage of being unit-free
+
+- Percentage error: $p_t = 100 \times (e_t / y_t)$
+- Mean absolute percentage error (MAPE): $MAPE = mean(|p_t|)$
+
+Those measures based on percentage errors have the disadvantage of being infinite or undefined if $y_t = 0$ for any t in the period of interest, and having extreme values if any $y_t$ is close to zero. 
+
+Another commonly used measure is the sMAPE (used in M3 for example). Hyndman & Koehler (2006) recommend that the sMAPE not be used. 
+
+#### Scaled errors 
+In the same paper scaled errors were proposed as alternative when **comparing forecast accuracy across series with different units**. 
+
+- How to: Scaling errors based on the *training MAE* from a simple forecast method.
+
+For a non-sseasonal time series, useful way to define a scaled error uses naive forecasts:
+
+$$q_j = \frac{e_j}{\frac{1}{T-1} \sum_{t=2}^T |y_t - y_{t-1}|}$$
+where $y_t - y_{t-1}$ is the naive forecast error.
+
+- Numerator and denominator both involve values on the scale of the original data, hence $q_j$ is independent of the scale of the data. 
+- Scaled error is less than one if it arises from a better forecast than the average naive forecast computed on the training data. 
+- It is greater than one if the forecast is worse than the average naive forecast computed on the training data. 
+
+For seasonal time series, a scaled error can be defined using seasonal naive forecasts:
+
+$$q_j = \frac{e_j}{\frac{1}{T-m} \sum_{t=m+1}^T |y_t - y_{t-m}|}$$
+
+and the mean absolute scaled error is simply:
+
+$$MASE = mean(|q_j|)$$
+
+```{r}
+# Seasonal Example
+beer2 <- window(ausbeer,start=1992,end=c(2007,4))
+beerfit1 <- meanf(beer2,h=10)
+beerfit2 <- rwf(beer2,h=10)
+beerfit3 <- snaive(beer2,h=10)
+autoplot(window(ausbeer, start=1992)) +
+  autolayer(beerfit1, series="Mean", PI=FALSE) +
+  autolayer(beerfit2, series="Naïve", PI=FALSE) +
+  autolayer(beerfit3, series="Seasonal naïve", PI=FALSE) +
+  xlab("Year") + ylab("Megalitres") +
+  ggtitle("Forecasts for quarterly beer production") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# accuracy
+beer3 <- window(ausbeer, start=2008)
+accuracy(beerfit1, beer3)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(beerfit2, beer3)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(beerfit3, beer3)[,c("RMSE","MAE", "MAPE","MASE")]
+```
+
+For now, the seasonal naive method is best for these data (from graph and measures). 
+
+Nonseasonal example:
+
+```{r}
+googfc1 <- meanf(goog200, h=40)
+googfc2 <- rwf(goog200, h=40)
+googfc3 <- rwf(goog200, drift=TRUE, h=40)
+autoplot(subset(goog, end = 240)) +
+  autolayer(googfc1, PI=FALSE, series="Mean") +
+  autolayer(googfc2, PI=FALSE, series="Naïve") +
+  autolayer(googfc3, PI=FALSE, series="Drift") +
+  xlab("Day") + ylab("Closing Price (US$)") +
+  ggtitle("Google stock price (daily ending 6 Dec 13)") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# accuracy
+googtest <- window(goog, start=201, end=240)
+accuracy(googfc1, googtest)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(googfc2, googtest)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(googfc3, googtest)[,c("RMSE","MAE", "MAPE","MASE")]
+```
+
+Here, the drift method seems to be the best among the three forecasts. 
+
+## Time series cross-validation
+Series of test sets, each consisting of a single observation. The corresponding training set consists only of observations that occurred *prior* to the observation that forms the test set. Forecast accuracy is computed by averaging over the test sets. 
+
+- Also known as "evaluation on a rolling forecasting origin" because the "origin" at which the forecast is based rolls forward in time.
+
+Cross-validation procedure can be modified to allow multi-step errors to be used (suppose we are interested in models that produce for example good 4-step-ahead forecasts).  
+
+Time series cross-validation is implemented with the `tsCV()` function. 
+
+```{r}
+# Compare RMSE of time series cross validation with residual RMSE
+e <- tsCV(goog200, rwf, drift = TRUE, h=1)
+sqrt(mean(e^2, na.rm=TRUE))
+sqrt(mean(residuals(rwf(goog200, drift=TRUE))^2, na.rm=TRUE))
+```
+
+- RMSE from residuals is smaller, as the corresponding "forecasts" are based on a model fitted to the entire data set, rather than being true forecasts.
+- Good way to choose the best forecasting model is to find the model with the smallest RMSE computed using time series cross-validation.
+
+
+#### Pipe operator
+
+```{r}
+goog200 %>% tsCV(forecastfunction=rwf, drift=TRUE, h=1) -> e
+
+e^2 %>% 
+  mean(na.rm=TRUE) %>% 
+  sqrt()
+
+goog200 %>% rwf(drift=TRUE) %>% residuals() -> res
+
+res^2 %>% 
+  mean(na.rm=TRUE) %>% 
+  sqrt()
+
+```
+
+Note that with pipes it may seem more natural to use the right arrow assignment `->` rather than the left arrow.
+
+```{r}
+# Example: using tsCV()
+e <- tsCV(goog200, forecastfunction = naive, h=8)
+
+# Compute MSE and remove missing values
+mse <- colMeans(e^2, na.rm=TRUE)
+
+# plot mse against forecast horizon
+data.frame(h=1:8, MSE = mse) %>% 
+  ggplot(aes(x=h, y=MSE)) +
+  geom_point()
+```
+
+
+
+
 
 
 
