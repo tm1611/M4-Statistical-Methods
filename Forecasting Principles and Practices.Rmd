@@ -649,11 +649,177 @@ data.frame(h=1:8, MSE = mse) %>%
   geom_point()
 ```
 
+## Prediction Intervals 
+PI givbes an interval within which we expect $y_t$ to lie with a specified probability. 
+
+Assuming the forecast errors are normally distributed, a 95% prediction interval for the h-step forecast is given by 
+$$ \hat{y}_{T+h|T} \, \pm 1.96 \hat{\sigma}_h $$
+
+where $\hat{\sigma}_h$ is an estimate of the standard deviation of the h-step forecast distribution. 
+
+If we only produce point forecasts, there is no way of telling how accurate the forecasts are. However, if we also produce prediction intervals, then it is  clear how much uncertainty is associated with each forecast. 
+
+#### One-step prediction intervals
+Almost the same as the standard deviation of the residuals for one step ahead predictions. 
+
+- No parameters (naive method): standard deviation is the same for forecast and residual
+
+#### Multi-step prediction intervals
+- PI usually increases as forecast horizon increases.
+- Multi-step forecasts require a more complicatred method
+
+#### Benchmark methods
+Four benchmark methods to mathematically derive the forecast standard devaition under the assumption of uncorrelated residuals. 
+
+
+#### Prediction intervals from bootstrapped residuals
+Assumption that forecst errors are normally distributed:
+
+- Rewrite: $y_t = \hat{y}_{t|t-1}+ e_t$
+- Simulate: $y_{T+1} = \hat{y}_{T+1|T} + e_{T+1}$
+
+where $\hat{y}_{T+1|T}$ is the one-step forecast and $e_{T+1}$ the unknown future error. Assuming future errors will be similar to past errors, we replace these errors by sampling from the colleciton of errors we have seen in the past (i.e. residuals). In this way, we can simulate an entire set of future valus for our time series. 
+
+- Repeat: Doing this repeatedly, we obtain many possible futures from which we can computed prediction intervals by calculating percentiles for each forecast horizong.
+
+```{r}
+naive(goog200, bootstrap=TRUE, h=5)
+```
+
+If transformation has been used, prediction interval should be computed on the transformed scale, and the end points back-transformed to give a prediction interval on the original scale. Back-transforamtion is done autocamitally using the functions in the **forecast** package.
+
+## The forecast package in R
+Many functions of this package produce output of class `forecast`. This object contains information about forecasting method, data used, point forecasts obtained, PI, residauls and fitted values. 
+
+Functions designed to work with these objects: 
+
+- `autoplot()`
+- `summary()`
+- `print()`
+
+List of all functions that produce `forecast`objects: 
+
+- `meanf()`
+- `naive(), snaive()`
+- `rwf()`
+- `croston()`
+- `stlf() `
+- `ses()`
+- `holt(), hw()`
+- `splinef()`
+- `thetaf()`
+- `forecast()`
+
+#### `forecast()` function
+We have used functions which produce a `forecast()`object directly. More common approach:
+
+- fit a model to the data
+- use the `forecast()` function to produce forecats
+
+Uses automatic ETS algorithm if first argument is of class `ts` (hence if it is not already a forecast model).
+
+```{r}
+# blind model
+forecast(ausbeer, h=4)
+```
+
+
+## Exercises
+
+1. Find an appropriate Box-Cox transformation in order to stabilise the variance
+
+```{r}
+# 1. Find appropriate Box-Cox transformation 
+autoplot(mcopper)
+lmd <-BoxCox.lambda(mcopper)
+autoplot(BoxCox(mcopper, lmd))
+
+# 2. Why BC unhelpful for cangas
+autoplot(cangas)
+lmd <- BoxCox.lambda(cangas)
+autoplot(BoxCox(cangas, lmd))
+```
+
+As variance increases and then decreases there is no BoxCox transformation that can mimic this changing behavior of the series.
+
+```{r}
+# 5 Calculate residuals
+beer <- window(ausbeer, start=1992)
+fc <- snaive(beer)
+autoplot(fc)
+res <- residuals(fc)
+autoplot(res)
+#checkresiduals(res)
+```
 
 
 
 
 
 
+```{r}
+# 8
+myts.train <- window(my_ts2, end = c(2010, 12))
+myts.test <- window(my_ts2, start = 2011)
+
+autoplot(my_ts2) + 
+  autolayer(myts.train, series ="Training") +
+  autolayer(myts.test, series = "Test")
+
+fc_snaive <- snaive(myts.train)
+fc_arima <- forecast(auto.arima(myts.train))
+fc_ets <- forecast(ets(myts.train))
+fc_tbats <- forecast(tbats(myts.train))
+
+fc_comb1 <- 0.5*(fc_arima$mean + fc_ets$mean)
+fc_comb2 <- (1/3)*(fc_snaive$mean + fc_arima$mean + fc_ets$mean)
+fc_comb3 <- (1/3)*(fc_snaive$mean + fc_ets$mean + fc_tbats$mean)
+
+accuracy(fc_snaive, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(fc_arima, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(fc_ets, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+accuracy(fc_tbats, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+
+accuracy(fc_comb1, myts.test)[,c("RMSE","MAE", "MAPE")]
+accuracy(fc_comb2, myts.test)[,c("RMSE","MAE", "MAPE")]
+accuracy(fc_comb3, myts.test)[,c("RMSE", "MAE", "MAPE")]
+
+checkresiduals(fc_snaive)
+```
+
+```{r}
+# 9.
+train1 <- window(visnights[, "QLDMetro"], end=c(2015,4))
+train2 <- window(visnights[, "QLDMetro"], end=c(2014,4))
+train3 <- window(visnights[, "QLDMetro"], end=c(2013,4))
+
+# fc
+fc1 <- forecast(snaive(train1), h=4)
+fc2 <- forecast(snaive(train2), h=4)
+fc3 <- forecast(snaive(train3), h=4)
+
+autoplot(window(visnights[,"QLDMetro"], start=2014)) +
+  autolayer(fc1, PI=FALSE, series="Forecast 1") +
+  autolayer(fc2, PI=FALSE, series="Forecast 2") +
+  autolayer(fc3, PI=FALSE, series="Forecast 3")
+
+accuracy(fc1, visnights[,"QLDMetro"])[,"MAPE"]
+accuracy(fc2, train1)[,"MAPE"]
+accuracy(fc3, train2)[,"MAPE"]
+```
+
+```{r}
+# 10. 
+autoplot(dowjones)
+
+# drift method
+fc_drift <- forecast(rwf(dowjones, drift = TRUE))
+autoplot(fc_drift)
+```
+
+```{r}
+# 11.
+
+```
 
 
