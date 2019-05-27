@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
   out_dir <- 'html_outputs';
   rmarkdown::render(input_file,
   encoding=encoding,
-  output_file=file.path(dirname(input_file), out_dir, 'Forecasting_PP.html'))})
+  output_file=file.path(dirname(input_file), out_dir, 'FPP 1to3.html'))})
 ---
 
 ```{r, message=FALSE, echo=FALSE}
@@ -20,6 +20,7 @@ library("ggplot2")
 library("forecast")
 library("fpp2")
 library("GGally")
+library("aTSA")
 ```
 
 # Introduction
@@ -697,7 +698,7 @@ Functions designed to work with these objects:
 - `summary()`
 - `print()`
 
-List of all functions that produce `forecast`objects: 
+List of all functions that produce `forecast` objects and thus forecasts directly. For these functions we have to directly specify the forecast horizon when calling them. This is different to `ets()` or `auto.arima()` for example which create a model first which can then subsequently be used for forecasting. 
 
 - `meanf()`
 - `naive(), snaive()`
@@ -720,7 +721,7 @@ Uses automatic ETS algorithm if first argument is of class `ts` (hence if it is 
 
 ```{r}
 # blind model
-forecast(ausbeer, h=4)
+#forecast(ausbeer, h=4)
 ```
 
 
@@ -767,22 +768,15 @@ autoplot(my_ts2) +
   autolayer(myts.test, series = "Test")
 
 fc_snaive <- snaive(myts.train)
-fc_arima <- forecast(auto.arima(myts.train))
-fc_ets <- forecast(ets(myts.train))
-fc_tbats <- forecast(tbats(myts.train))
+#fc_arima <- forecast(auto.arima(myts.train))
+#fc_ets <- forecast(ets(myts.train))
+#fc_tbats <- forecast(tbats(myts.train))
+#e$mean + fc_ets$mean + fc_tbats$mean)
 
-fc_comb1 <- 0.5*(fc_arima$mean + fc_ets$mean)
-fc_comb2 <- (1/3)*(fc_snaive$mean + fc_arima$mean + fc_ets$mean)
-fc_comb3 <- (1/3)*(fc_snaive$mean + fc_ets$mean + fc_tbats$mean)
-
-accuracy(fc_snaive, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
-accuracy(fc_arima, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
-accuracy(fc_ets, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
-accuracy(fc_tbats, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
-
-accuracy(fc_comb1, myts.test)[,c("RMSE","MAE", "MAPE")]
-accuracy(fc_comb2, myts.test)[,c("RMSE","MAE", "MAPE")]
-accuracy(fc_comb3, myts.test)[,c("RMSE", "MAE", "MAPE")]
+#accuracy(fc_snaive, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+#accuracy(fc_arima, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+#accuracy(fc_ets, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
+#accuracy(fc_tbats, myts.test)[,c("RMSE","MAE", "MAPE","MASE")]
 
 checkresiduals(fc_snaive)
 ```
@@ -794,9 +788,9 @@ train2 <- window(visnights[, "QLDMetro"], end=c(2014,4))
 train3 <- window(visnights[, "QLDMetro"], end=c(2013,4))
 
 # fc
-fc1 <- forecast(snaive(train1), h=4)
-fc2 <- forecast(snaive(train2), h=4)
-fc3 <- forecast(snaive(train3), h=4)
+fc1 <- snaive(train1, h=4)
+fc2 <- snaive(train2, h=4)
+fc3 <- snaive(train3, h=4)
 
 autoplot(window(visnights[,"QLDMetro"], start=2014)) +
   autolayer(fc1, PI=FALSE, series="Forecast 1") +
@@ -813,13 +807,68 @@ accuracy(fc3, train2)[,"MAPE"]
 autoplot(dowjones)
 
 # drift method
-fc_drift <- forecast(rwf(dowjones, drift = TRUE))
+fc_drift <- rwf(dowjones, drift = TRUE, h = 10)
 autoplot(fc_drift)
 ```
 
 ```{r}
 # 11.
+autoplot(ibmclose)
 
+train <- window(ibmclose, end=300)
+test <- window(ibmclose, start=301)
+
+# benchmark methods
+fc1 <- naive(train, h=69)
+fc2 <- rwf(train, drift=T, h=69)
+fc3 <- meanf(train, h=69)
+
+autoplot( window(train,start=200), series="IBM")+
+  autolayer(fc1, PI=F, series="naive") + 
+  autolayer(fc2, PI=F, series="rwf") +
+  autolayer(fc3, PI=F, series="meanf") +
+  autolayer(test, PI=F, series="Test")
+
+accuracy(fc1, test)[,c("RMSE", "MASE")]
+accuracy(fc2, test)[,c("RMSE", "MASE")]
+accuracy(fc3, test)[,c("RMSE", "MASE")]
 ```
 
+Note that there are functions which create forecasts directly (like `meanf()`) and functions that generate models (like `ets()`). For functinos that generate forecasts directly, we need to specify the forecast horizon when we call the function. 
+
+```{r}
+# 12
+autoplot(hsales)
+ggAcf(hsales)
+ggPacf(hsales)
+
+train <- window(hsales, end=c(1993,11))
+test <- window(hsales, start=c(1993,12))
+
+# seasonal
+ggseasonplot(hsales, polar = T)
+adf.test(train)
+
+# benchmarks
+fc1 <- snaive(train, h = 24)
+#arima_model <- auto.arima(train)
+#fc2 <- forecast(arima_model, h=24)
+#ets_model <- ets(train)
+#fc3 <- forecast(ets_model, 24)
+
+# accuracy 
+#accuracy(fc1, test)[,"RMSE"]
+#accuracy(fc2, test)[,"RMSE"]
+#accuracy(fc3, test)[,"RMSE"]
+
+# plot
+#autoplot(train) +
+ # autolayer(fc1, PI=F, series="snaive") +
+  #autolayer(fc2, PI=F, series="arima")+
+  #autolayer(fc3, PI=F, series="ets") + 
+  #autolayer(test, PI=F, series="test")
+
+# residuals
+#checkresiduals(fc2)
+```
 
