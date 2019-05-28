@@ -1,5 +1,5 @@
 ---
-title: "Forecasting: PrP_Ch6"
+title: "Forecasting: Principles and Practice (Ch.6)"
 author: "Timo Meiendresch"
 date: "27/05/2019"
 knit: (function(input_file, encoding) {
@@ -17,6 +17,7 @@ graphics.off()
 ```{r, message=FALSE}
 # libraries
 library("fpp2")
+library("seasonal")
 ```
 
 # Chapter 6: Time Series decomposition
@@ -106,7 +107,143 @@ Two forms of classical decomposition: an additive decomposition and a multiplica
 - Step 1: Compute trend-cycle component $\hat{T}_t$
 - Step 2: Calculate detrended series $y_t - \hat{T}_t$ 
 - Step 3: Estimate seasonal component $S_t$ by averaging the detrended values for that season (plus some adjustments).
--  
+- Step 4: The remainder component is calculated by subtracting the estimated seasonal and trend-cycle components $\hat{R}_t = y_t - \hat{T}_t - \hat{S}_t $
+
+#### Multiplicative decomposition
+Similar, except that the subtractions are replaced by divisions
+
+- Step 1: (...)
+
+```{r}
+elecequip %>% 
+  decompose(type="multiplicative") %>% 
+  autoplot() +
+  xlab("Year") +
+  ggtitle("Classical multiplicative decomposition of elecequip")
+```
+
+#### Notes
+
+- Not recommended, as there are now several much better methods
+
+Problems with classical decomposition:
+
+- Estimate for first few and last few observations not available
+- Trend-cycle estimate tends to over-smooth rapid rises and falls in the data
+- Assumes seasonal component repeats from year to year which is not always a reasonable assumption (pattern changes)
+- Not robust to unusual values
+
+## X11 decomposition
+Combination of classical decomposition and some extra steps. Process is automatic and highly robust to outliers and level shifts in the time series. Method is described in Dagum and Bianconcini (2016). The X11 method is available using `seas()` function from the `seasonal` package for R.
+
+```{r}
+elecequip %>% 
+  seas(x11="") -> fit
+
+autoplot(fit) + 
+  ggtitle("X11 decomposition elecequip")
+``` 
+
+- X11 has capture the sudden fall in the data better and the unsual observation at the end of 2009 is now more clearly seen in the remainder component. 
+
+Given the output from the `seas()` function: 
+
+- `seasonal()`extracts seasonal component
+- `trendcycle()` extracts trend-cycle component
+- `remainder()` extracts remainder component
+- `seasadj()` computes seasonally adjusted ts
+
+```{r}
+autoplot(elecequip, series="Data") +
+  autolayer(trendcycle(fit), series="Trend") +
+  autolayer(seasadj(fit), series="Seasonally Adjusted") +
+  xlab("Year") + ylab("New orders index") +
+  ggtitle("Electrical equipment manufacturing (Euro area)") +
+  scale_colour_manual(values=c("gray","blue","red"),
+             breaks=c("Data","Seasonally Adjusted","Trend"))
+```
+
+```{r}
+# visualize seasonal component over time
+fit %>% 
+  seasonal() %>% 
+  ggsubseriesplot() + ylab("Seasonal")
+
+
+```
+
+## SEATS decomposition
+Stands for "Seasonal Extraction in ARIMA Time Series". Works only with quarterly and monthly data. Discussion of this method is available in Dagum and Bianconcini (2016). Demonstration only
+
+```{r}
+elecequip %>% 
+  seas() %>% 
+  autoplot() + ggtitle("SEATS decomposition of electrical equipment index")
+```
+
+## STL decomposition
+Accronym for "Seasonal and Trend decomposition using Loess". Loess is a method for estimating nonlinear relationships. 
+
+Advantages over classical, SEATS and X11 decomposition methods:
+
+- Handles any type of seasonality, not only monthly and quarterly data
+- Seasonal component is allowed to change over time, rate of change can be controlled by the user.
+- Smoothness of the trend-cycle can also be controlled by the user. 
+- Robust to outliers (user can specify a robust decomposition). 
+
+STL has some disadvantages: 
+
+- Does not handle trading day or calendar variation automatically
+- only provides facilities for additive decompositions
+
+```{r}
+elecequip %>% 
+  stl(t.window=13, s.window="periodic", robust=T) %>% 
+  autoplot()
+
+```
+
+Parameters: 
+
+- trend-cycle window (`t.window`): Number of consecutive observations to be used when estimating the trend-cycle
+- seasonal window (`s.window`): Number of consecutive years to be used in estimating each value in the seasonal component. 
+
+These control how rapidly the trend-cycle and seasonal components can change. Both should be odd numbers. 
+
+`mstl()` function provides a convenient automated STL decomposition using `s.window=13`, and `t.window` also chosen automatically. This usually gives a good balance between overfitting the seasonality and allowing it to slowly change over time. This automatic procedure can be adjusted for some time series. Again, components can be extracted using `seasonal()`, `trendcycle()`, `remainder()` function for the remainder component. The `seasadj()`function can be used to compute the seasonally adjusted series.
+
+## Measuring strength of trend and seasonality
+
+- Time series decomposition to measure strength of trend and seasonality (Wang, Smith & Hyndman, 2006)
+- Strongly trended data: Seasonally adjusted data should have more variation than the remainder component
+- Hence: Relative variation $ \frac{Var(R_t)}{Var(T_t + R_t)} $ should be small 
+- Data with little or no trend: Both variances should approximately be the same. 
+
+Define the **strength of trend** as:
+
+$$ F_T = max \Bigg(0, 1- \frac{Var(R_t)}{Var(T_t + R_t)} \Bigg)$$
+
+- Yields measure between 0 and 1.
+
+Define **strength of seasonality** similarly as:
+
+$$ F_S = max \Bigg(0, 1- \frac{Var(R_t)}{Var(S_t + R_t)} \Bigg)$$
+
+A series with seasonal strength $F_S$ close to 0 exhibits almost no seasonality, while a series with strong seasonality will have $F_S$ close to 1. 
+
+- These measures are useful to determine series with strong trend or seasonality. 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
