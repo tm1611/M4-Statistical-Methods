@@ -1,5 +1,5 @@
 ---
-title: "FPP_Ch6"
+title: "Forecasting: PrP_Ch6"
 author: "Timo Meiendresch"
 date: "27/05/2019"
 knit: (function(input_file, encoding) {
@@ -9,26 +9,108 @@ knit: (function(input_file, encoding) {
   output_file=file.path(dirname(input_file), out_dir, 'FPP_6_Decomposition.html'))})
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r, message=FALSE}
+# libraries
+library("fpp2")
 ```
 
-## Including Plots
+# Chapter 6: Time Series decomposition
+We think of a time series comprising three components: 
 
-You can also embed plots, for example:
+- a trend-cycle component
+- a seasonal component
+- a remainder component (containing anything else in the time series)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+How to extract these components and eventually use this to improve the forecast?
+
+Additive decomposition: 
+$$ y_t = S_t + T_t + R_t $$
+
+Multiplicative decomposition: 
+$$ y_t = S_t \times T_t \times R_t $$
+
+- Additive decomposition if the magnitude of the seasonal fluctuations, or variation around trend-cycle, does not vary with the level of the time series. 
+- Variation around the trend-cycle proportional to the level of the time series, then a multiplicative decomposition is more appropriate
+
+Especially for economic time series multiplicative decompositions are common. Alternatively, transform/stabilize time series first and use additive decomposition (e.g. log transformation is equivalent to using a multiplicative decomposition on the levels).
+
+## Moving averages
+First step is to use a moving average method to estimate the trend-cycle
+
+Moving average of order m: 
+$$\hat{T}_t = \frac{1}{m} \sum_{j=-k}^k y_{t+j}$$
+
+where $m=2k+1$. The estimate of the trend-cycle at time t is obtained by averaging values of the time series within k periods of t. The average eliminates some of the randomness, leaving a smooth trend-cycle component, called m-**MA**, a moving average of order m.
+
+```{r}
+autoplot(elecsales, series="Data") + 
+  autolayer(ma(elecsales,5), series ="5-MA")+
+  xlab("Year") + 
+  ylab("GWh") +
+  ggtitle("Annual electricity sales: South Australia") +
+  scale_colour_manual(values=c("Data"="grey50",
+                               "5-MA"="red"),
+                      breaks=c("Data", "5-MA"))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#### Moving average of moving averages
+WE can apply a moving average to a moving average making this an even -order moving average symmetric.
+
+When a 2-MA follows a moving average of an even order (such as 4), it is called a "centred moving average of order 4". This is because the results are now symmetric. To see this, we can write the $2\times4-MA$ as follows:
+
+
+$$ \hat{T}_t = \frac{1}{2} \bigg[\frac{1}{4}(y_{t-2} + y_{t-1} + y_t + y_{t+1}) + \frac{1}{4}(y_{t-1} + y_t + y_{t+1} + y_{t+2}) \bigg] $$
+
+It is now a weighted average of observations that is symmetric. 
+
+## Estimating the trend-cycle with seasonal data
+Most common use of centred moving averages is for estimating the trend-cycle from seasonal data. 
+
+Consider the $2\times 4-MA$ from before. We can rewrite it as: 
+
+$$ \hat{T}_t = \frac{1}{8} y_{t-2} + \frac{1}{4} y_{t-1} + \frac{1}{4}y_t + \frac{1}{4}y_{t+1} + \frac{1}{8}y_{t+2} $$
+
+When applied to quarterly data, each quarter of the year is given equal weight as the first and last terms apply to the same quarter in consecutive years. Hence, seasonal variation will be averaged out. 
+
+Accordingly one should choose the order of MA according to frequency to get rid of the seasonality: 
+
+- $2\times8-MA$ or $2\times12-MA$ to quarterly data
+- $2\times12-MA$ to estimate the trend-cycle of monthly data 
+- $7-MA$ to estimate the trend-cycle of daily data with a weekly seasonality.
+
+```{r}
+# Example
+autoplot(elecequip, series="Data") +
+  autolayer(ma(elecequip, 12), series="12-MA") +
+  xlab("Year") +
+  ylab("New orders index") +
+  ggtitle("Electrical equipment manufacturing (Euro area)") + 
+  scale_colour_manual(values=c("Data"="grey",
+                               "12-MA"="red"),
+                      breaks=c("Data", "12-MA"))
+
+```
+
+Here, the $2\times12-MA$ is applied and the smooth line shows no seasonality. 
+
+## Classical decomposition
+Two forms of classical decomposition: an additive decomposition and a multiplicative one. In classical decomposition the seasonal component is assumed to be constant, whereas for multiplicative seasonality the seasonality is varying.
+
+#### Additive decomposition
+
+- Step 1: Compute trend-cycle component $\hat{T}_t$
+- Step 2: Calculate detrended series $y_t - \hat{T}_t$ 
+- Step 3: Estimate seasonal component $S_t$ by averaging the detrended values for that season (plus some adjustments).
+-  
+
+
+
+
+
+
+
