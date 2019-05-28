@@ -1,5 +1,5 @@
 ---
-title: "Forecasting: Principles and Practice (Ch.6)"
+title: "FPP Chapter 6: Decomposition of Time Series"
 author: "Timo Meiendresch"
 date: "27/05/2019"
 knit: (function(input_file, encoding) {
@@ -197,20 +197,27 @@ STL has some disadvantages:
 - only provides facilities for additive decompositions
 
 ```{r}
+# fixed seasonality 
 elecequip %>% 
   stl(t.window=13, s.window="periodic", robust=T) %>% 
   autoplot()
-
 ```
 
 Parameters: 
 
 - trend-cycle window (`t.window`): Number of consecutive observations to be used when estimating the trend-cycle
 - seasonal window (`s.window`): Number of consecutive years to be used in estimating each value in the seasonal component. 
+- Note that `s.window="periodic", robust=TRUE` implies fixed seasonality. 
 
 These control how rapidly the trend-cycle and seasonal components can change. Both should be odd numbers. 
 
 `mstl()` function provides a convenient automated STL decomposition using `s.window=13`, and `t.window` also chosen automatically. This usually gives a good balance between overfitting the seasonality and allowing it to slowly change over time. This automatic procedure can be adjusted for some time series. Again, components can be extracted using `seasonal()`, `trendcycle()`, `remainder()` function for the remainder component. The `seasadj()`function can be used to compute the seasonally adjusted series.
+
+```{r}
+# handles multiple seasonality
+mstl(taylor) %>% 
+  autoplot()
+```
 
 ## Measuring strength of trend and seasonality
 
@@ -233,20 +240,163 @@ A series with seasonal strength $F_S$ close to 0 exhibits almost no seasonality,
 
 - These measures are useful to determine series with strong trend or seasonality. 
 
+## Forecasting with decomposition
+To forecast decomposed time series, components can be foreasted separately. 
+
+- *Seasonal component* is usually assumed to be unchanging (or changing extremely slowly): Forecast using seasonal naive method
+- *Seasonally adjusted component* can be forecasted with any non-seasonal forecasting method (e.g. random walk with drift, Holt's method, or a non seasonal ARIMA)
+
+```{r}
+fit <- stl(elecequip, 
+           t.window = 13,
+           s.window = "periodic",
+           robust = TRUE)
+
+fit %>% 
+  seasadj() %>% 
+  naive() %>% 
+  autoplot() +
+  ylab("New orders index") + 
+  ggtitle("Naive forecasts of seasonally adjusted data")
+  
+  
+```
+
+The figure shows naive forecasts of the seasonally adjusted electrical equipment orders data. These are then "reseasonalised" by adding the seasonal naive forecats of the seasonal component. 
+
+```{r}
+fit %>% 
+  forecast(method="naive") %>% 
+  autoplot() + ylab("New orders index")
+```
+
+A short-cut approach is to use the `stlf()` function. It will
+
+- decompose the time series using STL
+- forecast seasonally adjusted seraies
+- return reseasonalized forecasts. 
+
+```{r}
+fcast <- stlf(elecequip, method="naive")
+autoplot(fcast)
+```
 
 
+## Exercises
 
+#### 2. Data: `plastics`
 
+```{r}
+autoplot(plastics)
 
+# classical multiplicative decomposition
+plastics %>% 
+  decompose(type="multiplicative") %>% 
+  autoplot() +
+  xlab("Year") +
+  ggtitle("Classical multiplicative decomposition")
 
+# plot seasonally adjusted data
+fit <- decompose(plastics, type="multiplicative")
 
+fit %>% 
+  seasadj() %>% 
+  autoplot() +
+  xlab("Year") +
+  ggtitle("Seasonally adjusted data")
 
+```
 
+#### 3. Data: retail
 
+```{r}
+# X11 of retail time series.
+# Outliers, unusual features?
+retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+my_ts <- ts(retail[,"A3349335T"],
+            frequency=12, 
+            start=c(1982, 4))
 
+autoplot(my_ts)
 
+X11_fit <- seas(my_ts, x11 ="")
+autoplot(X11_fit)
 
+X11_fit %>% 
+  seasonal() %>% 
+  ggsubseriesplot() + ylab("Seasonal")
+```
 
+#### 5. Data: `cangas`
+
+```{r}
+autoplot(cangas)
+ggsubseriesplot(cangas)
+ggseasonplot(cangas)
+
+# STL decomposition
+cangas %>% 
+  stl(t.window=13, s.window=7, robust=TRUE)  %>% 
+  autoplot() + ggtitle("STL decomposition")
+
+# compare to X11
+cangas %>% 
+  seas(x11="") %>% 
+  autoplot() + ggtitle("X11 decomposition")
+
+# compare to SEATS
+cangas %>% 
+  seas() %>% 
+  autoplot() + ggtitle("SEATS decomposition")
+
+```
+
+#### 6. Data: `bricksq`
+
+```{r}
+autoplot(bricksq)
+
+# STL decomposition
+bricksq %>% 
+  stl(t.window=13, s.window=4) -> stl_fit
+
+autoplot(stl_fit)
+
+# forecast seasonal adjusted data
+seasadj(stl_fit) %>% 
+  naive() %>% 
+  autoplot()
+
+# Reseasonalise
+stl_fit %>% 
+  forecast(method="naive") %>% 
+  autoplot() 
+
+stlf(bricksq) %>% 
+  autoplot()
+```
+
+#### 7. Data=`writing`
+
+```{r}
+autoplot(writing)
+stlf_fit <- stlf(writing, method="rwdrift")
+autoplot(stlf_fit)
+```
+
+#### 8. Data:`fancy`
+
+```{r}
+autoplot(fancy)
+lmd <- BoxCox.lambda(fancy)
+autoplot(BoxCox(fancy, lmd))
+
+# 
+fancy %>% 
+  BoxCox(lmd) %>% 
+  stlf(method="rwdrift") %>% 
+  autoplot()
+```
 
 
 
