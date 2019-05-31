@@ -27,7 +27,9 @@ aust <- window(austourists,start=2005)
 
 # holt-winter
 fit1 <- hw(aust,seasonal="additive")
+fit1[["model"]]
 fit2 <- hw(aust,seasonal="multiplicative")
+fit2[["model"]]
 
 # plot
 autoplot(aust) +
@@ -38,4 +40,36 @@ autoplot(aust) +
   ylab("Visitor nights (millions)") +
   ggtitle("International visitors nights in Australia") +
   guides(colour=guide_legend(title="Forecast"))
+
+
 ```
+
+- Smoothing parameters and initial estimates for components have been estimated by minimising RMSE
+
+#### Holt-Winters' damped method
+
+Damped trend is possible with additive and multiplicative seasonality. Often accurate and robsut forecasts for seasonal data with a damped trend and multiplicative seasonality, i.e. using `hw(y, damped=TRUE, seasonal="multiplicative")`:
+
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \left[\ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t}\right]s_{t+h-m(k+1)}. \\
+  \ell_{t} &= \alpha(y_{t} / s_{t-m}) + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)\phi b_{t-1}             \\
+  s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + \phi b_{t-1})} + (1 - \gamma)s_{t-m}.
+\end{align*}
+$$
+
+```{r}
+### Example: HW daily data
+# model
+fc <- hw(subset(hyndsight,end=length(hyndsight)-35),
+         damped = TRUE, seasonal="multiplicative", h=35)
+
+# plot
+autoplot(hyndsight) +
+  autolayer(fc, series="HW multi damped", PI=FALSE)+
+  guides(colour=guide_legend(title="Daily forecasts"))
+```
+
+
+
