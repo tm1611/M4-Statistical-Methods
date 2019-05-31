@@ -18,3 +18,131 @@ graphics.off()
 # libraries
 library("fpp2")
 ```
+
+# Introduction
+
+Basics:
+
+- Weighted averages of past observations
+- weights decaying exponentially as the observations get older
+- Hence, more recent observation gets higher weight
+
+## Simple exponential smoothing
+The simplest form is called **simple exponential smoothing** (SES).
+
+- Suitable for data with no clear trend and no seasonal pattern. 
+
+```{r}
+oil <- window(oil, start=1996)
+autoplot(oil) + 
+  ylab("Oil (millions of tonnes)") +
+  xlab("Year")
+
+```
+
+Recall that the naive method simply took the last observation. Hence, the weight of the last observation was 1. On the other hand, averaging placed equal weight on all observations.
+
+In simple exponential smoothing forecasts are calculated using weighted averages, where the weights decrease exponentially.
+
+$$ \hat{y}_{T+1|T} = \alpha \, y_T + \alpha\,(1-\alpha)y_{T-1} + \alpha\,(1-\alpha)^2 y_{T-2} + \,... $$
+
+where $0 \leq \alpha \leq 1$ is the smoothing parameter.
+
+#### Weighted average form
+Forecast at time $T+1$ is equal to a weighted average between the most recent observation $y_T$ and the previous forecast $\hat{y}_{T|T-1}$: 
+
+$$\hat{y}_{T+1|t} = \alpha y_T + (1-\alpha) \hat{y}_{T|T-1}$$
+
+Iterative substituion leads to 
+
+$$ \hat{y}_{T+1|T} = \sum_{j=0}^{T-1} \alpha(1-\alpha)^j y_{T-j} + (1-\alpha)^T \ell_0$$
+The last term becomes tiny for large T. So, the weighted average form leads to the same forecast equation stated at the beginning. 
+
+#### Component form
+State equations in component form. For now, in simple exponential smoothing, the only component included is the level $\ell_t$. Later, a trend $b_t$ and a seasonal component $s_t$ will be added. 
+
+Component form of SES:
+
+$$
+\begin{align*}
+  \text{Forecast equation}  && \hat{y}_{t+h|t} & = \ell_{t}\\
+  \text{Smoothing equation} && \ell_{t}        & = \alpha y_{t} + (1 - \alpha)\ell_{t-1},
+\end{align*}
+$$
+
+where $l_t$ is the level (smoothed value) of the series at time t. Setting $h=1$ gives the fitted values, setting $t=T$ gives the true forecasts beyond the training data. So far the component form of SES is not particularly useful, but it will be the easiest form to use if other components are added.
+
+#### Flat forecasts
+SES has a flat forecast function. All forecasted values are equal to the last level component (forecasts suitable if ts has no trend or seasonal component).
+
+#### Optimisation
+Method requires initialisation choosing two parameters:
+
+- Value of $\alpha$
+- initial level $l_0$
+
+Estimate values from observed data and minimising the sum of squared residuals (SSE). Values of unknown parameters that minimise 
+
+$$
+SSE = \sum_{t=1}^T (y_t - \hat{y}_{t|t-1})^2 = \sum_{t=1}^T e_t^2 
+$$
+
+which poses a nonlinear minimisation problem. 
+
+```{r}
+# estimate parameters
+fc <- ses(oil, h=5)
+
+# summary
+summary(fc)
+
+# accuracy one-step-ahead
+round(accuracy(fc),2)
+
+autoplot(fc) +
+  autolayer(fitted(fc), series ="Fitted") +
+  ylab("Oil (millions of tonnes)") + xlab("Year")
+```
+
+Note that there is substantial uncertainty and so interpreting the point forecasts without accounting for the large uncertainty can be very misleading. 
+
+## Trend methods
+Holt extended SES to allow forecasting of data with trend. In addition to the level equation, a trend equation is added. 
+
+$$
+\begin{align*}
+  \text{Forecast equation}&& \hat{y}_{t+h|t} &= \ell_{t} + hb_{t} \\
+  \text{Level equation}   && \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  \text{Trend equation}   && b_{t}    &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)b_{t-1},
+\end{align*}
+$$
+
+- $l_t$ denotes an estimate of the level at time $t$
+- $b_t$ denotes an estimate of the trend (slope) of the series at time t, 
+- $\alpha$ is the smoothing parameter for the level
+- $\beta^\star$ is the smoothing parameter for the trend.
+- $h$ captures the trend and is equal to the last estimated level plus h times the last estimated trend value. 
+
+Note that $l_t$ is a weighted average of observation $y_t$ and the one-step-ahead training forecast for time t, here given by $l_{t-1} + b_{t-1}$. 
+
+The trend equation shows that $b_t$ is a weighted average of the estimated trend at time t based on $l_t - l_{t-1}$ and $b_{t-1}$, the previous estimate of the trend. 
+
+
+```{r}
+air <- window(ausair, start = 1990)
+# estimate 
+fc <- holt(air, h=5)
+
+# look at smoothing pars and trend, level states. 
+summary(fc)
+
+autoplot(fc) 
+```
+
+#### Damped trend methods
+
+
+
+
+
+
