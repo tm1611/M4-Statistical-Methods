@@ -71,5 +71,33 @@ autoplot(hyndsight) +
   guides(colour=guide_legend(title="Daily forecasts"))
 ```
 
+## Taxonomy of exponential smoothing
+
+Variations in the components of the trend and seasonal components yield nine exponential smoothing methods. 
+
+![](images/Classification_ES.png)
+
+Some of these have already been introduced before:
+
+![](images/Shorthand.png){width=66%}
+
+Multiplicative trend methods are not considered here as they tend to produce bad forecasts. 
+
+Overview of all the equations related to the nine exponential smoothing methods: 
+
+![](images/pegelstable.png)
+
+- $l_t$ denotes series level
+- $b_t$ denotes slope at time t
+- $s_t$ denotes the seasonal component of the series
+- $m$ denotes number of seasons in a year
+- $\alpha, \beta^\star, \gamma, \phi$ are smoothing parameter
+- $\phi_h = \phi + \phi^2 + ... + \phi^h$
+- $k$ is the integer part of $(h-1)/m$
+
+
+
+
+
 
 
