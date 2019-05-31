@@ -1,0 +1,41 @@
+---
+title: "Exponential Smoothing: Part 2"
+author: "Timo Meiendresch"
+date: "31/05/2019"
+knit: (function(input_file, encoding) {
+  out_dir <- 'html_outputs';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir, 'FPP_7_ES2.html'))})
+---
+
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
+```
+
+```{r, message=FALSE}
+# libraries
+library("fpp2")
+```
+
+#### Example: Holt-Winter (additive / multiplicative)
+
+```{r}
+# data
+aust <- window(austourists,start=2005)
+
+# holt-winter
+fit1 <- hw(aust,seasonal="additive")
+fit2 <- hw(aust,seasonal="multiplicative")
+
+# plot
+autoplot(aust) +
+  autolayer(fit1, series="HW additive forecasts", PI=FALSE) +
+  autolayer(fit2, series="HW multiplicative forecasts",
+    PI=FALSE) +
+  xlab("Year") +
+  ylab("Visitor nights (millions)") +
+  ggtitle("International visitors nights in Australia") +
+  guides(colour=guide_legend(title="Forecast"))
+```

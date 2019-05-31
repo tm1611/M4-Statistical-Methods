@@ -1,5 +1,5 @@
 ---
-title: "FPP Chapter 7: Exponential Smoothing"
+title: "Exponential Smoothing: Part 1"
 author: "Timo Meiendresch"
 date: "28/05/2019"
 knit: (function(input_file, encoding) {
@@ -140,6 +140,139 @@ autoplot(fc)
 ```
 
 #### Damped trend methods
+Forecast's by Holt's linear method display a constant trend indefinitely into the future. This leads to overforecasting, especially for longer forecast horizons. 
+
+A parameter that "dampens" the trend to a flat line some time in the future is introduced. 
+
+Holt's method with damped trend:
+
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t} \\
+  \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)\phi b_{t-1}.
+\end{align*}
+$$
+
+- $\phi$ is the damping parameter $0 < \phi < 1 $
+- For $\phi = 1$, the method is identical to Holt's linear method. 
+- For values between 0 and 1, $\phi$ dampens the trend so that it approaches a constant some time in the future.
+- Usually damping is restricted to values for $\phi$ between 0.8 and a maximum of $.98$.
+
+```{r}
+# Example: holt vs. damped holt
+fc <- holt(air, h=15)
+fc2 <- holt(air, phi=0.9,damped=TRUE, h=15)
+
+# 
+autoplot(air) +
+  autolayer(fc, series="Holt's method", PI=FALSE) +
+  autolayer(fc2, series="Damped Holt's method", PI=FALSE) +
+  ggtitle("Forecasts from Holt's method") + xlab("Year") +
+  ylab("Air passengers in Australia (millions)") +
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+#### Comparison non-seasonal exponential smoothing
+
+```{r}
+# Example: Comparison SES, holt, damped holt
+fc <- ses(livestock)
+fc2 <- holt(livestock)
+fc3 <- holt(livestock, damped=TRUE)
+
+# plot
+autoplot(livestock) +
+  autolayer(fc, PI=FALSE, series="SES") +
+  autolayer(fc2, PI=FALSE, series="Holt") +
+  autolayer(fc3, PI=FALSE, series="Damped Holt") +
+  ggtitle("Comparison exponential smoothing") +
+  ylab("Sheep (in million)") +
+  xlab("Year")
+
+# errors (time series Cross-Validation)
+e1 <- tsCV(livestock, ses, h=1)
+e2 <- tsCV(livestock, holt, h=1)
+e3 <- tsCV(livestock, holt, damped=TRUE, h=1)
+
+# MSE
+mse <- function(error){
+  mean(error^2, na.rm=TRUE)
+}
+
+MSE <- data.frame(MSE_ses=mse(e1), 
+                  MSE_holt=mse(e2), 
+                  MSE_d_holt=mse(e3))
+MSE[which.min(MSE)]
+
+# mae
+mae <- function(error){
+  mean(abs(error), na.rm=TRUE)
+}
+
+MAE <- data.frame(MAE_ses=mae(e1), 
+                  MAE_holt=mae(e2),
+                  MAE_d_holt=mae(e3))
+MAE[which.min(MAE)]
+```
+
+For MAE and MSE damped holt's method is best. Therefore, we will proceed with using the damped Holt's method and apply it to the whole data.
+
+```{r}
+fc <- holt(livestock, damped=TRUE)
+
+fc[["model"]]
+```
+
+- Smoothing parameter for level $\alpha$ is close to one, showing that the level reacts strongly to each new observation.
+- Smoothing parameter for the slope is essentially zero, indicating that the trend is not chanign over time.
+
+```{r}
+autoplot(fc)
+```
+
+## Holt-Winters' seasonal method
+Extension of the Holt method to capture seasonality is called the **Holt-Winters seasonal method** consisting of the forecast equation and three smoothing equations. 
+- one for the level $\ell_t$
+- one for the trend $b_t$
+- one for the seasonal component $s_t$, with corresponding smoothing parameters $\alpha, \beta^\star, \gamma$. 
+
+$m$ is used to denote the frequency of seasonality, i.e. the number of seasons in a year. 
+
+Two variations of the seasonal component: 
+
+- **Additive method**: When seasonal variations are roughly constant through the series; seasonal component is expressed in absolute terms in the scale of the observed series
+- **Multiplicative method**: When the seasonal variations are changing proportional to the level of the series; Seasonal component expressed in relative terms (percentages), series is seasonally adjusted by dividing through by the seasonal component.
+
+#### Holt-Winters' additive method
+The component form for the additive method: 
+
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + hb_{t} + s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha(y_{t} - s_{t-m}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+  s_{t} &= \gamma (y_{t}-\ell_{t-1}-b_{t-1}) + (1-\gamma)s_{t-m},
+\end{align*}
+$$
+
+- k is the integer part of $(h-1)/m$ so that the estimates of the seasonal indices used for forecasting come from the final year of the sample. 
+- **Level equation:** Weighted average of seasonally adjusted observation $(y_t - s_{t-m})$ and non-seasonal forecast $(\ell_{t-1} + b_{t-1}$ for time t. 
+- **Trend equation:** Identical to Holt's linear method.
+- **Seasonal equation:** Weighted average between the current seasonal index $(y_t - \ell_{t-1} + b_{t+1})$ and seasonal index of the same season last year (i.e. m time periods ago). 
+
+#### Holt-Winter's multiplicative method
+
+Component form for the multiplicative method is: 
+
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= (\ell_{t} + hb_{t}) \, s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha(y_{t} / s_{t-m}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+  s_{t} &= \gamma (y_{t}/(\ell_{t-1}+b_{t-1})) + (1-\gamma)s_{t-m}
+\end{align*}
+$$
 
 
 
