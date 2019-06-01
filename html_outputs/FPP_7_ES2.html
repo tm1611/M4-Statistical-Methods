@@ -505,6 +505,48 @@ autoplot(hyndsight) +
 <li><span class="math inline">\(Trend = {N, A, A_d}\)</span></li>
 <li><span class="math inline">\(Seasonal = {N, A, M}\)</span></li>
 </ul>
+<div id="etsann-simple-exponential-smoothing-additive-errors" class="section level4">
+<h4>ETS(A,N,N): Simple exponential smoothing, additive errors</h4>
+<p>Recall the component form:</p>
+<p><span class="math display">\[
+\begin{align*}
+  \text{Forecast equation}  &amp;&amp; \hat{y}_{t+1|t} &amp; = \ell_{t}\\
+  \text{Smoothing equation} &amp;&amp; \ell_{t}        &amp; = \alpha y_{t} + (1 - \alpha)\ell_{t-1},
+\end{align*}
+\]</span></p>
+<p>Re-arrange smoothing equation for the level</p>
+<p><span class="math display">\[
+\begin{align*}
+\ell_{t} &amp;= \alpha y_{t}+\ell_{t-1}-\alpha\ell_{t-1}\\
+         &amp;= \ell_{t-1}+\alpha( y_{t}-\ell_{t-1})\\
+         &amp;= \ell_{t-1}+\alpha e_{t}
+\end{align*}
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+e_t = y_t - l_{t-1} = y_t - \hat{y}_{t|t-1}
+\]</span></p>
+<p>We can also rewrite this as</p>
+<p><span class="math display">\[ 
+y_t = l_{t-1} + e_t 
+\]</span> - Each observation is represented by last period’s level plus error - Specify probability distribution for <span class="math inline">\(e_t\)</span> to make it an innovations state space model - Additive errors: Assume residuals (one-step training errors) <span class="math inline">\(e_t\)</span> are normally distirbuted.</p>
+<p><span class="math display">\[
+\begin{align}
+  y_t &amp;= \ell_{t-1} + \varepsilon_t \\
+  \ell_t&amp;=\ell_{t-1}+\alpha \varepsilon_t. 
+\end{align}
+\]</span></p>
+<p>Where the first is the measurement (or observation) equation and the second the state equation. Togehter with the assumption of the error distribution we have a fully specified statistical model.</p>
+<ul>
+<li>Measurement equation shows relationship between observations and unobserved states.</li>
+<li>Here: <span class="math inline">\(y_t\)</span> is a linear function of the predictable part (the level <span class="math inline">\(l_t\)</span>) and the unpredictable part (error <span class="math inline">\(\varepsilon_t\)</span>)</li>
+<li>State equation shows the evolution of the state</li>
+</ul>
+</div>
+<div id="etsm-n-n-simple-exponential-smoothing-with-multiplicative-errors" class="section level4">
+<h4>ETS(M, N, N): Simple exponential smoothing with multiplicative errors</h4>
+<p>Specify models with mult</p>
+</div>
 </div>
 
 

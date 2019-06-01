@@ -116,10 +116,59 @@ Possibilities for each component:
 - $Trend = {N, A, A_d}$
 - $Seasonal = {N, A, M}$
 
+#### ETS(A,N,N): Simple exponential smoothing, additive errors 
+
+Recall the component form: 
+
+$$
+\begin{align*}
+  \text{Forecast equation}  && \hat{y}_{t+1|t} & = \ell_{t}\\
+  \text{Smoothing equation} && \ell_{t}        & = \alpha y_{t} + (1 - \alpha)\ell_{t-1},
+\end{align*}
+$$
+
+Re-arrange smoothing equation for the level
+
+$$
+\begin{align*}
+\ell_{t} &= \alpha y_{t}+\ell_{t-1}-\alpha\ell_{t-1}\\
+         &= \ell_{t-1}+\alpha( y_{t}-\ell_{t-1})\\
+         &= \ell_{t-1}+\alpha e_{t}
+\end{align*}
+$$
+
+where 
+
+$$
+e_t = y_t - l_{t-1} = y_t - \hat{y}_{t|t-1}
+$$
+
+We can also rewrite this as 
+
+$$ 
+y_t = l_{t-1} + e_t 
+$$
+- Each observation is represented by last period's level plus error
+- Specify probability distribution for $e_t$ to make it an innovations state space model
+- Additive errors: Assume residuals (one-step training errors) $e_t$ are normally distirbuted. 
+
+$$
+\begin{align}
+  y_t &= \ell_{t-1} + \varepsilon_t \\
+  \ell_t&=\ell_{t-1}+\alpha \varepsilon_t. 
+\end{align}
+$$
+
+Where the first is the measurement (or observation) equation and the second the state equation. Togehter with the assumption of the error distribution we have a fully specified statistical model. 
+
+- Measurement equation shows relationship between observations and unobserved states. 
+- Here: $y_t$ is a linear function of the predictable part (the level $l_t$) and the unpredictable part (error $\varepsilon_t$)
+- State equation shows the evolution of the state
 
 
+#### ETS(M, N, N): Simple exponential smoothing with multiplicative errors
 
-
+Specify models with mult
 
 
 
