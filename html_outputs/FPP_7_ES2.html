@@ -486,6 +486,26 @@ autoplot(hyndsight) +
 <li><span class="math inline">\(k\)</span> is the integer part of <span class="math inline">\((h-1)/m\)</span></li>
 </ul>
 </div>
+<div id="innvations-state-space-models-for-exponential-smoothing" class="section level2">
+<h2>Innvations state space models for exponential smoothing</h2>
+<p>So far, algorithms which generate point forecasts. Now, we’ll use a statistical model which also generates prediction intervals.</p>
+<ul>
+<li><strong>Statistical Model:</strong> Stochastic, data-generating process</li>
+</ul>
+<p>Each model consists of:</p>
+<ul>
+<li>Measurement equation: describing observed data</li>
+<li>State equations: describe unobserved components or states (level, trend, seasonal) changing over time</li>
+</ul>
+<p>Both equations together are referred to as <strong>state space models</strong>. Each method has two models: one with additive errors and one with multiplicative errors. Point forecasts produced are identical if they have the same smoothing parameter values.</p>
+<p>To distinguish between model with additive/multiplicative errors, a third letter is added leading to the model called ETS(.,.,.) for (Error, Trend, Seasonal).</p>
+<p>Possibilities for each component:</p>
+<ul>
+<li><span class="math inline">\(Error = {A, M}\)</span></li>
+<li><span class="math inline">\(Trend = {N, A, A_d}\)</span></li>
+<li><span class="math inline">\(Seasonal = {N, A, M}\)</span></li>
+</ul>
+</div>
 
 
 

@@ -95,6 +95,30 @@ Overview of all the equations related to the nine exponential smoothing methods:
 - $\phi_h = \phi + \phi^2 + ... + \phi^h$
 - $k$ is the integer part of $(h-1)/m$
 
+## Innvations state space models for exponential smoothing
+
+So far, algorithms which generate point forecasts. Now, we'll use a statistical model which also generates prediction intervals. 
+
+- **Statistical Model:** Stochastic, data-generating process
+
+Each model consists of: 
+
+- Measurement equation: describing observed data
+- State equations: describe unobserved components or states (level, trend, seasonal) changing over time
+
+Both equations together are referred to as **state space models**. Each method has two models: one with additive errors and one with multiplicative errors. Point forecasts produced are identical if they have the same smoothing parameter values. 
+
+To distinguish between model with additive/multiplicative errors, a third letter is added leading to the model called ETS(.,.,.) for (Error, Trend, Seasonal). 
+
+Possibilities for each component: 
+
+- $Error = {A, M}$
+- $Trend = {N, A, A_d}$
+- $Seasonal = {N, A, M}$
+
+
+
+
 
 
 
