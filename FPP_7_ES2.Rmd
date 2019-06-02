@@ -168,9 +168,24 @@ Where the first is the measurement (or observation) equation and the second the 
 
 #### ETS(M, N, N): Simple exponential smoothing with multiplicative errors
 
-Specify models with mult
+Specify models with multiplicative errors by writing the one-step-ahead training errors as relative errors:
 
+$$
+\varepsilon_t = \frac{y_t-\hat{y}_{t|t-1}}{\hat{y}_{t|t-1}}
+$$
+This can be formulated as state space model in the following way: 
 
+$$
+\begin{align*}
+  y_t&=\ell_{t-1}(1+\varepsilon_t)\\
+  \ell_t&=\ell_{t-1}(1+\alpha \varepsilon_t).
+\end{align*}
+$$
 
+#### ETS(A,A,N): Holt's linear method with additive errors
 
+- additive errors
+- trend
+- no seasonlity
 
+One-step-ahead training errors are given by $\varepsilon_t = y_t - l_{t-1} - b_{t-1} \sim NID(0,\$

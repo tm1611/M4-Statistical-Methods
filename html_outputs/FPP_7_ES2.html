@@ -545,7 +545,16 @@ y_t = l_{t-1} + e_t
 </div>
 <div id="etsm-n-n-simple-exponential-smoothing-with-multiplicative-errors" class="section level4">
 <h4>ETS(M, N, N): Simple exponential smoothing with multiplicative errors</h4>
-<p>Specify models with mult</p>
+<p>Specify models with multiplicative errors by writing the one-step-ahead training errors as relative errors:</p>
+<p><span class="math display">\[
+\varepsilon_t = \frac{y_t-\hat{y}_{t|t-1}}{\hat{y}_{t|t-1}}
+\]</span> This can be formulated as state space model in the following way:</p>
+<p><span class="math display">\[
+\begin{align*}
+  y_t&amp;=\ell_{t-1}(1+\varepsilon_t)\\
+  \ell_t&amp;=\ell_{t-1}(1+\alpha \varepsilon_t).
+\end{align*}
+\]</span></p>
 </div>
 </div>
 
