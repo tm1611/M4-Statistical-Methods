@@ -276,6 +276,594 @@ $$
 
 
 
+#### Example: Holt-Winter (additive / multiplicative)
+
+```{r}
+# data
+aust <- window(austourists,start=2005)
+
+# holt-winter
+fit1 <- hw(aust,seasonal="additive")
+fit1[["model"]]
+fit2 <- hw(aust,seasonal="multiplicative")
+fit2[["model"]]
+
+# plot
+autoplot(aust) +
+  autolayer(fit1, series="HW additive forecasts", PI=FALSE) +
+  autolayer(fit2, series="HW multiplicative forecasts",
+    PI=FALSE) +
+  xlab("Year") +
+  ylab("Visitor nights (millions)") +
+  ggtitle("International visitors nights in Australia") +
+  guides(colour=guide_legend(title="Forecast"))
+
+
+```
+
+- Smoothing parameters and initial estimates for components have been estimated by minimising RMSE
+
+#### Holt-Winters' damped method
+
+Damped trend is possible with additive and multiplicative seasonality. Often accurate and robsut forecasts for seasonal data with a damped trend and multiplicative seasonality, i.e. using `hw(y, damped=TRUE, seasonal="multiplicative")`:
+
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \left[\ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t}\right]s_{t+h-m(k+1)}. \\
+  \ell_{t} &= \alpha(y_{t} / s_{t-m}) + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)\phi b_{t-1}             \\
+  s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + \phi b_{t-1})} + (1 - \gamma)s_{t-m}.
+\end{align*}
+$$
+
+```{r}
+### Example: HW daily data
+# model
+fc <- hw(subset(hyndsight,end=length(hyndsight)-35),
+         damped = TRUE, seasonal="multiplicative", h=35)
+
+# plot
+autoplot(hyndsight) +
+  autolayer(fc, series="HW multi damped", PI=FALSE)+
+  guides(colour=guide_legend(title="Daily forecasts"))
+```
+
+## Taxonomy of exponential smoothing
+
+Variations in the components of the trend and seasonal components yield nine exponential smoothing methods. 
+
+![](images/Classification_ES.png)
+
+Some of these have already been introduced before:
+
+![](images/Shorthand.png){width=66%}
+
+Multiplicative trend methods are not considered here as they tend to produce bad forecasts. 
+
+Overview of all the equations related to the nine exponential smoothing methods: 
+
+![](images/pegelstable.png)
+
+- $l_t$ denotes series level
+- $b_t$ denotes slope at time t
+- $s_t$ denotes the seasonal component of the series
+- $m$ denotes number of seasons in a year
+- $\alpha, \beta^\star, \gamma, \phi$ are smoothing parameter
+- $\phi_h = \phi + \phi^2 + ... + \phi^h$
+- $k$ is the integer part of $(h-1)/m$
+
+## Innvations state space models for exponential smoothing
+
+So far, algorithms which generate point forecasts. Now, we'll use a statistical model which also generates prediction intervals. 
+
+- **Statistical Model:** Stochastic, data-generating process
+
+Each model consists of: 
+
+- Measurement equation: describing observed data
+- State equations: describe unobserved components or states (level, trend, seasonal) changing over time
+
+Both equations together are referred to as **state space models**. Each method has two models: one with additive errors and one with multiplicative errors. Point forecasts produced are identical if they have the same smoothing parameter values. 
+
+To distinguish between model with additive/multiplicative errors, a third letter is added leading to the model called ETS(.,.,.) for (Error, Trend, Seasonal). 
+
+Possibilities for each component: 
+
+- $Error = {A, M}$
+- $Trend = {N, A, A_d}$
+- $Seasonal = {N, A, M}$
+
+#### ETS(A,N,N): Simple exponential smoothing, additive errors 
+
+Recall the component form: 
+
+$$
+\begin{align*}
+  \text{Forecast equation}  && \hat{y}_{t+1|t} & = \ell_{t}\\
+  \text{Smoothing equation} && \ell_{t}        & = \alpha y_{t} + (1 - \alpha)\ell_{t-1},
+\end{align*}
+$$
+
+Re-arrange smoothing equation for the level
+
+$$
+\begin{align*}
+\ell_{t} &= \alpha y_{t}+\ell_{t-1}-\alpha\ell_{t-1}\\
+         &= \ell_{t-1}+\alpha( y_{t}-\ell_{t-1})\\
+         &= \ell_{t-1}+\alpha e_{t}
+\end{align*}
+$$
+
+where 
+
+$$
+e_t = y_t - l_{t-1} = y_t - \hat{y}_{t|t-1}
+$$
+
+We can also rewrite this as 
+
+$$ 
+y_t = l_{t-1} + e_t 
+$$
+- Each observation is represented by last period's level plus error
+- Specify probability distribution for $e_t$ to make it an innovations state space model
+- Additive errors: Assume residuals (one-step training errors) $e_t$ are normally distirbuted. 
+
+$$
+\begin{align}
+  y_t &= \ell_{t-1} + \varepsilon_t \\
+  \ell_t&=\ell_{t-1}+\alpha \varepsilon_t. 
+\end{align}
+$$
+
+Where the first is the measurement (or observation) equation and the second the state equation. Togehter with the assumption of the error distribution we have a fully specified statistical model. 
+
+- Measurement equation shows relationship between observations and unobserved states. 
+- Here: $y_t$ is a linear function of the predictable part (the level $l_t$) and the unpredictable part (error $\varepsilon_t$)
+- State equation shows the evolution of the state
+
+
+#### ETS(M, N, N): Simple exponential smoothing with multiplicative errors
+
+Specify models with multiplicative errors by writing the one-step-ahead training errors as relative errors:
+
+$$
+\varepsilon_t = \frac{y_t-\hat{y}_{t|t-1}}{\hat{y}_{t|t-1}}
+$$
+This can be formulated as state space model in the following way: 
+
+$$
+\begin{align*}
+  y_t&=\ell_{t-1}(1+\varepsilon_t)\\
+  \ell_t&=\ell_{t-1}(1+\alpha \varepsilon_t).
+\end{align*}
+$$
+
+#### ETS(A,A,N): Holt's linear method with additive errors
+
+- additive errors
+- trend
+- no seasonlity
+
+One-step-ahead training errors are given by $\varepsilon_t = y_t - l_{t-1} - b_{t-1} \sim NID(0,\sigma^2)$.
+
+Holt's linea method is then formulated as:
+
+$$
+\begin{align*}
+y_t&=\ell_{t-1}+b_{t-1}+\varepsilon_t\\
+\ell_t&=\ell_{t-1}+b_{t-1}+\alpha \varepsilon_t\\
+b_t&=b_{t-1}+\beta \varepsilon_t,
+\end{align*}
+$$
+where, for simplicity, we have $\beta = \alpha \beta^\star$
+
+#### ETS(M,A,N): Holt's linear methods with multiplicative errors
+
+One-step-ahead training errors as relative errors:
+
+$$
+\varepsilon_t=\frac{y_t-(\ell_{t-1}+b_{t-1})}{(\ell_{t-1}+b_{t-1})}
+$$
+
+Innovations state space model: 
+
+$$
+\begin{align*}
+y_t&=(\ell_{t-1}+b_{t-1})(1+\varepsilon_t)\\
+\ell_t&=(\ell_{t-1}+b_{t-1})(1+\alpha \varepsilon_t)\\
+b_t&=b_{t-1}+\beta(\ell_{t-1}+b_{t-1}) \varepsilon_t
+\end{align*}
+$$
+
+where again $\beta = \alpha \beta$ and $\varepsilon \sim NID(0,\sigma^2)$
+
+### Other ETS models
+
+All statee equations for each of the models in the ETS framework. 
+
+![](images/statespacemodels.png)
+
+## Estimation and model selection
+
+#### Estimating ETS models
+
+Two appraoches: 
+
+- Minimising sum of squared errors
+- Alternative: Maximise "likelihood"
+
+Same results for additive error model but different results for multiplicative error models. Estimate smoothing parameters 
+
+- $\alpha, \beta, \gamma, \phi$
+
+and initial states
+
+- $\ell_0, b_0, s_0, s_{-1}, ..., s_{-m+1}$ 
+
+by MLE.
+
+- Possible values are restricted
+
+## Model selection
+
+In the ETS framework information criteria can be used for model selection. For ETS models these are defined as 
+
+$$
+\text{AIC} = -2\log(L) + 2k
+$$
+- L is likelihood of the model and $k$ the total number of parameters and initial states 
+
+$$
+\text{AIC}_{\text{c}} = \text{AIC} + \frac{k(k+1)}{T-k-1},
+$$
+$$
+\text{BIC} = \text{AIC} + k[\log(T)-2].
+$$
+
+Following models can cause numerical difficulties due to division by values potentially close to zero in the state equations: 
+
+- ETS(A,N,M)
+- ETS(A,A,M)
+- ETS(A,A$_d$,M)
+
+In general, we do not consider these particular combinations when selecting a model.
+
+Models with multiplicative errors are useful when data are strictly positive, but not numerically stable when the data contain zeros or negative values. 
+
+Therefore, multiplicative error models will not be considered if the time series is not strictly positive. Only the six fully additive models will be applied.
+
+#### The `ets()` function in R
+
+Unlike previous methods (i.e. `ses()`, `holt()`, `hw()`), the `ets()` function yields a model with estimated parameters and information about the fitted model. AICc is used to select an appropriate model, although other information criteria can be selected. 
+
+- For more information use `?ets()`
+
+#### Working with `ets()` objects
+
+The function returns an object of class `ets`. Important functions: 
+
+- `coef()`: returns fitted parameters
+- `accuracy()`: returns accuracy measures computed on training data
+- `summary()` prints summary information
+- `autoplot()`,`plot()`: time plots of the components
+- `residuals()`: returns residuals from the estimated model 
+- `fitted()`: returns one-step forecasts for the training data. 
+- `simulate()`: will simulate future sample paths from the fitted model.
+- `forecast()`: computes point forecasts and prediction intervals 
+
+#### Example: International tourist visitor nights in Australia
+
+```{r}
+aust <- window(austourists, start = 2005)
+fit <- ets(aust)
+
+# see model fit
+summary(fit)
+
+# plot
+autoplot(fit)
+```
+
+The model selected is ETS(M,A,M):
+
+$$
+\begin{align*}
+y_{t} &= (\ell_{t-1} + b_{t-1})s_{t-m}(1 + \varepsilon_t)\\
+\ell_t &= (\ell_{t-1} + b_{t-1})(1 + \alpha \varepsilon_t)\\
+b_t &=b_{t-1} + \beta(\ell_{t-1} + b_{t-1})\varepsilon_t\\
+s_t &=  s_{t-m}(1+ \gamma \varepsilon_t).
+\end{align*}
+$$
+
+With multiplicative errors, the residuals are not equivalent to the one-step training errors. 
+
+```{r}
+cbind("Residuals"=residuals(fit),
+      "Forecast errors"=residuals(fit, type="response")) %>% 
+  autoplot(facet=TRUE) + xlab("Year") + ylab("")
+
+```
+
+## Forecasting with ETS models
+
+ETS point forecasts are equal to the medians of the forecast distributions. For models with only additive components, the forecast distributions are normal, hence medians and means are equal. 
+
+For ETS models with multiplicative errors or multiplicative seasonality, the point forecasts will not be equal to the means of the forecast distributions. 
+
+```{r}
+fit %>% 
+  forecast(h=8) %>% 
+  autoplot() + 
+  ylab("International visitor night in Australia (millions)")
+```
+
+
+#### Prediction intervals 
+
+- Advantage: Prediction intervals (PI) can be generated
+- PI will differ between models with additive and multiplicative methods.
+
+$$
+\hat{y}_{T+h|T} \pm c \sigma_h
+$$
+
+where c depends on the coverage probability, and $\sigma_h^2$ is the forecast variance. The following table give the formulas for the additive ETS models (which are the simplest). 
+
+![](images/forecastvariances.png)
+
+#### Using `forecast()`
+
+Explanations of some new arguments: 
+
+- `simulate()`: If `simulate=TRUE`, predicion intervals are produced by simultion rather than algebraic formulas. Simlation will also be used where there are no algebraic formulas available for the particular model. 
+- If `bootstrap=TRUE` and `simulate=TRUE`, then the simulated prediction intervals use re-sampled errors rather than normally distributed errors. 
+- `npaths`: The number of sample paths used in computing simulated prediction intervals. 
+- `biasadj`: If `lambda` is not `NULL`, the back-transformed forecasts (and PI) are bias-adjusted.
+
+## Exercises
+
+#### Ex.1
+
+```{r}
+autoplot(pigs)
+
+fit <- ses(pigs, h=4)
+autoplot(fit)
+
+summary(fit)
+
+# 95% PI
+
+
+```
+
+#### 2.
+```{r}
+# from fit
+alpha <- 0.2971
+ell <- 77260
+sigma <- 10308
+
+# test series
+ts <- ts(rnorm(19, 20, 1),start = c(2000,1))
+autoplot(ts)
+         
+tm_ses <- function(y, alpha, level){
+  last <- y[length(y)]
+  alpha*last + (1-alpha)*level
+  }
+
+tm_ses(ts, 0.5, 20)
+
+tm_ses(pigs, alpha, ell)
+```
+
+
+#### 5. 
+```{r}
+autoplot(books) +
+  ggtitle("Sales of paperback and hardcover books") +
+  ylab("Book sales") +
+  xlab("days")
+
+# Paperback
+books[,"Paperback"] %>% 
+  ses(h=4) %>% 
+  autoplot()
+
+fit_paper <- ses(books[,"Paperback"])
+accuracy(fit_paper)
+
+# Hardcover
+books[,"Hardcover"] %>% 
+  ses(h=4) %>% 
+  autoplot()
+
+fit_hard <- ses(books[,"Hardcover"])
+accuracy(fit_hard)
+
+```
+
+#### Exercise 6
+
+```{r}
+# fit holt method
+fit_paper <- holt(books[,"Paperback"], h=4)
+fit_hard <- holt(books[, "Hardcover"], h=4)
+
+rbind(accuracy(fit_paper), accuracy(fit_hard))
+
+# plot
+autoplot(books, series="book") +
+  autolayer(fit_hard, PI=F, series="Hardcover") +
+  autolayer(fit_paper, PI=F, series="Paperback")
+```
+
+#### Exercise 7
+
+Use various options of the `holt()` method.
+
+- default
+- damped trend
+- Box-Cox transformation
+
+```{r}
+autoplot(eggs)
+
+fit_h1 <- holt(eggs, h=100)
+autoplot(fit_h1)
+
+fit_h2 <- holt(eggs, h=100, damped = TRUE)
+autoplot(fit_h2)
+
+lmd <- BoxCox.lambda(eggs)
+autoplot(BoxCox(eggs, lmd))
+fit_h3 <- holt(eggs, h = 100, lambda = lmd)
+autoplot(fit_h3)
+```
+
+#### Exercise 8
+
+```{r}
+retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+
+my_retail <- ts(retail[,"A3349335T"], 
+                frequency=12,
+                start=c(1982,4))
+
+autoplot(my_retail)
+
+# Holt-Winter
+fit_hw <- hw(my_retail, h=8)
+acc1 <- accuracy(fit_hw)[,c("RMSE","MAE", "MAPE","MASE")]
+
+fit_hw_d <- hw(my_retail, h=8, damped = TRUE)
+acc2 <- accuracy(fit_hw_d)[,c("RMSE","MAE", "MAPE","MASE")]
+
+data.frame(Accuracy_HW = acc1, Accuracy_HW_d=acc2)
+
+autoplot(window(my_retail, start=c(2010,1)), series="Retail") +
+  autolayer(fit_hw, series="Holt-Winter", PI=F) +
+  autolayer(fit_hw_d, series="Holt-Winter (damped)", PI=F) +
+  ggtitle("Retail sales") +
+  xlab("Year") +
+  ylab("Sales volume") + 
+  guides(colour=guide_legend(title="Forecast"))
+
+checkresiduals(fit_hw)
+
+```
+
+
+#### Exercise 9
+
+- STL decomposition applied to the Box-Cox transformed series
+- ETS on the seasonally adjusted data
+
+#### Exercise 10
+
+```{r}
+autoplot(ukcars)
+ggseasonplot(ukcars)
+ggsubseriesplot(ukcars)
+
+# Decmpose using stl
+ukcars %>% 
+  stl(t.window=13, s.window="periodic", robust=TRUE) -> fit
+
+autoplot(fit)
+``` 
+
+- Foreast two years
+- Use additive trend method applied to seasonally adjusted data
+
+```{r}
+# forecast additive damped trend
+fc1 <- stlf(seasadj(fit), etsmodel="AAN", damped=TRUE, h=8)
+autoplot(fc1)
+
+# forecast Holt's linear method
+fc2 <- holt(seasadj(fit), damped=FALSE, h=8)
+autoplot(fc2)
+
+# ets model
+fit_ets <- ets(ukcars)
+
+fc3 <- forecast(fit_ets, h=8)
+  
+rbind(accuracy(fc1), accuracy(fc2), accuracy(fc3))
+
+#
+checkresiduals(fc1)
+
+```
+
+#### Exercise 11
+
+```{r}
+# plot 
+autoplot(visitors)
+
+# train-test split
+train <- window(visitors, end=c(2003,4))
+test <- window(visitors, start=c(2003,5))
+
+# Holt-Winters multiplicative method
+fc_hw <- hw(train, h=24, seasonal="multiplicative")
+autoplot(fc_hw)
+acc_hw <- accuracy(fc_hw, test)[,c("RMSE","MAE", "MAPE","MASE")]
+
+# ETS
+fit_ets <- ets(train)
+fc_ets <- forecast(fit_ets, h=24)
+acc_ets <- accuracy(fc_ets, test)[,c("RMSE","MAE", "MAPE","MASE")]
+
+# ETS, Box-Cox 
+lmd <- BoxCox.lambda(train)
+fit_ets_bc <- ets(train, lambda = lmd)
+fc_ets_bc <- forecast(fit_ets_bc, h=24)
+acc_ets_bc <- accuracy(fc_ets_bc, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# seasonal naive method
+fc_snaive <- snaive(train, h=24)
+acc_snaive <- accuracy(fc_snaive, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# STL decomposition
+train %>% 
+  stl(t.window=13, s.window ="periodic") -> fit
+
+fit %>% 
+  seasadj() %>% 
+  ets() %>% 
+  forecast(h=24) -> fc_stl_ets
+
+autoplot(fc_stl_ets)
+acc_stl_ets <- accuracy(fc_stl_ets, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# auto.arima
+train %>% 
+  auto.arima() %>% 
+  forecast(h=24) -> fc_arima
+
+acc_arima <- accuracy(fc_arima, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+autoplot(fc_arima)
+
+# 
+rbind(acc_hw, acc_ets, acc_ets_bc, acc_snaive, acc_stl_ets, acc_arima)
+
+train_sub <- window(train, start=2000)
+
+autoplot(train_sub, series="Train", col="black") + 
+  autolayer(fc_ets, PI=FALSE, series="ETS") +
+  autolayer(fc_snaive, PI=FALSE, series="SNaive", col="blue")
+
+# tsCV() 
+```
+
+
+
+
 
 
 

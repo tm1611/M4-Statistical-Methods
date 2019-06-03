@@ -543,3 +543,65 @@ checkresiduals(fc1)
 ```
 
 #### Exercise 11
+
+```{r}
+# plot 
+autoplot(visitors)
+
+# train-test split
+train <- window(visitors, end=c(2003,4))
+test <- window(visitors, start=c(2003,5))
+
+# Holt-Winters multiplicative method
+fc_hw <- hw(train, h=24, seasonal="multiplicative")
+autoplot(fc_hw)
+acc_hw <- accuracy(fc_hw, test)[,c("RMSE","MAE", "MAPE","MASE")]
+
+# ETS
+fit_ets <- ets(train)
+fc_ets <- forecast(fit_ets, h=24)
+acc_ets <- accuracy(fc_ets, test)[,c("RMSE","MAE", "MAPE","MASE")]
+
+# ETS, Box-Cox 
+lmd <- BoxCox.lambda(train)
+fit_ets_bc <- ets(train, lambda = lmd)
+fc_ets_bc <- forecast(fit_ets_bc, h=24)
+acc_ets_bc <- accuracy(fc_ets_bc, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# seasonal naive method
+fc_snaive <- snaive(train, h=24)
+acc_snaive <- accuracy(fc_snaive, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# STL decomposition
+train %>% 
+  stl(t.window=13, s.window ="periodic") -> fit
+
+fit %>% 
+  seasadj() %>% 
+  ets() %>% 
+  forecast(h=24) -> fc_stl_ets
+
+autoplot(fc_stl_ets)
+acc_stl_ets <- accuracy(fc_stl_ets, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+
+# auto.arima
+train %>% 
+  auto.arima() %>% 
+  forecast(h=24) -> fc_arima
+
+acc_arima <- accuracy(fc_arima, test)[,c("RMSE", "MAE", "MAPE", "MASE")]
+autoplot(fc_arima)
+
+# 
+rbind(acc_hw, acc_ets, acc_ets_bc, acc_snaive, acc_stl_ets, acc_arima)
+
+train_sub <- window(train, start=2000)
+
+autoplot(train_sub, series="Train", col="black") + 
+  autolayer(fc_ets, PI=FALSE, series="ETS") +
+  autolayer(fc_snaive, PI=FALSE, series="SNaive", col="blue")
+
+# tsCV() 
+```
+
+
