@@ -188,4 +188,143 @@ $$
 - trend
 - no seasonlity
 
-One-step-ahead training errors are given by $\varepsilon_t = y_t - l_{t-1} - b_{t-1} \sim NID(0,\$
+One-step-ahead training errors are given by $\varepsilon_t = y_t - l_{t-1} - b_{t-1} \sim NID(0,\sigma^2)$.
+
+Holt's linea method is then formulated as:
+
+$$
+\begin{align*}
+y_t&=\ell_{t-1}+b_{t-1}+\varepsilon_t\\
+\ell_t&=\ell_{t-1}+b_{t-1}+\alpha \varepsilon_t\\
+b_t&=b_{t-1}+\beta \varepsilon_t,
+\end{align*}
+$$
+where, for simplicity, we have $\beta = \alpha \beta^\star$
+
+#### ETS(M,A,N): Holt's linear methods with multiplicative errors
+
+One-step-ahead training errors as relative errors:
+
+$$
+\varepsilon_t=\frac{y_t-(\ell_{t-1}+b_{t-1})}{(\ell_{t-1}+b_{t-1})}
+$$
+
+Innovations state space model: 
+
+$$
+\begin{align*}
+y_t&=(\ell_{t-1}+b_{t-1})(1+\varepsilon_t)\\
+\ell_t&=(\ell_{t-1}+b_{t-1})(1+\alpha \varepsilon_t)\\
+b_t&=b_{t-1}+\beta(\ell_{t-1}+b_{t-1}) \varepsilon_t
+\end{align*}
+$$
+
+where again $\beta = \alpha \beta$ and $\varepsilon \sim NID(0,\sigma^2)$
+
+### Other ETS models
+
+All statee equations for each of the models in the ETS framework. 
+
+![](images/statespacemodels.png)
+
+## Estimation and model selection
+
+#### Estimating ETS models
+
+Two appraoches: 
+
+- Minimising sum of squared errors
+- Alternative: Maximise "likelihood"
+
+Same results for additive error model but different results for multiplicative error models. Estimate smoothing parameters 
+
+- $\alpha, \beta, \gamma, \phi$
+
+and initial states
+
+- $\ell_0, b_0, s_0, s_{-1}, ..., s_{-m+1}$ 
+
+by MLE.
+
+- Possible values are restricted
+
+## Model selection
+
+In the ETS framework information criteria can be used for model selection. For ETS models these are defined as 
+
+$$
+\text{AIC} = -2\log(L) + 2k
+$$
+- L is likelihood of the model and $k$ the total number of parameters and initial states 
+
+$$
+\text{AIC}_{\text{c}} = \text{AIC} + \frac{k(k+1)}{T-k-1},
+$$
+$$
+\text{BIC} = \text{AIC} + k[\log(T)-2].
+$$
+
+Following models can cause numerical difficulties due to division by values potentially close to zero in the state equations: 
+
+- ETS(A,N,M)
+- ETS(A,A,M)
+- ETS(A,A$_d$,M)
+
+In general, we do not consider these particular combinations when selecting a model.
+
+Models with multiplicative errors are useful when data are strictly positive, but not numerically stable when the data contain zeros or negative values. 
+
+Therefore, multiplicative error models will not be considered if the time series is not strictly positive. Only the six fully additive models will be applied.
+
+#### The `ets()` function in R
+
+Unlike previous methods (i.e. `ses()`, `holt()`, `hw()`), the `ets()` function yields a model with estimated parameters and information about the fitted model. AICc is used to select an appropriate model, although other information criteria can be selected. 
+
+- For more information use `?ets()`
+
+#### Working with `ets()` objects
+
+The function returns an object of class `ets`. Important functions: 
+
+- `coef()`: returns fitted parameters
+- `accuracy()`: returns accuracy measures computed on training data
+- `summary()` prints summary information
+- `autoplot()`,`plot()`: time plots of the components
+- `residuals()`: returns residuals from the estimated model 
+- `fitted()`: returns one-step forecasts for the training data. 
+- `simulate()`: will simulate future sample paths from the fitted model.
+- `forecast()`: computes point forecasts and prediction intervals 
+
+#### Example: International tourist visitor nights in Australia
+
+```{r}
+aust <- window(austourists, start = 2005)
+fit <- ets(aust)
+
+# see model fit
+summary(fit)
+
+# plot
+autoplot(fit)
+```
+
+The model selected is ETS(M,A,M):
+
+$$
+\begin{align*}
+y_{t} &= (\ell_{t-1} + b_{t-1})s_{t-m}(1 + \varepsilon_t)\\
+\ell_t &= (\ell_{t-1} + b_{t-1})(1 + \alpha \varepsilon_t)\\
+b_t &=b_{t-1} + \beta(\ell_{t-1} + b_{t-1})\varepsilon_t\\
+s_t &=  s_{t-m}(1+ \gamma \varepsilon_t).
+\end{align*}
+$$
+
+
+
+
+
+
+
+
+
+
