@@ -381,7 +381,165 @@ summary(fit)
 
 ```
 
+#### 2.
+```{r}
+# from fit
+alpha <- 0.2971
+ell <- 77260
+sigma <- 10308
+
+# test series
+ts <- ts(rnorm(19, 20, 1),start = c(2000,1))
+autoplot(ts)
+         
+tm_ses <- function(y, alpha, level){
+  last <- y[length(y)]
+  alpha*last + (1-alpha)*level
+  }
+
+tm_ses(ts, 0.5, 20)
+
+tm_ses(pigs, alpha, ell)
+```
 
 
+#### 5. 
+```{r}
+autoplot(books) +
+  ggtitle("Sales of paperback and hardcover books") +
+  ylab("Book sales") +
+  xlab("days")
+
+# Paperback
+books[,"Paperback"] %>% 
+  ses(h=4) %>% 
+  autoplot()
+
+fit_paper <- ses(books[,"Paperback"])
+accuracy(fit_paper)
+
+# Hardcover
+books[,"Hardcover"] %>% 
+  ses(h=4) %>% 
+  autoplot()
+
+fit_hard <- ses(books[,"Hardcover"])
+accuracy(fit_hard)
+
+```
+
+#### Exercise 6
+
+```{r}
+# fit holt method
+fit_paper <- holt(books[,"Paperback"], h=4)
+fit_hard <- holt(books[, "Hardcover"], h=4)
+
+rbind(accuracy(fit_paper), accuracy(fit_hard))
+
+# plot
+autoplot(books, series="book") +
+  autolayer(fit_hard, PI=F, series="Hardcover") +
+  autolayer(fit_paper, PI=F, series="Paperback")
+```
+
+#### Exercise 7
+
+Use various options of the `holt()` method.
+
+- default
+- damped trend
+- Box-Cox transformation
+
+```{r}
+autoplot(eggs)
+
+fit_h1 <- holt(eggs, h=100)
+autoplot(fit_h1)
+
+fit_h2 <- holt(eggs, h=100, damped = TRUE)
+autoplot(fit_h2)
+
+lmd <- BoxCox.lambda(eggs)
+autoplot(BoxCox(eggs, lmd))
+fit_h3 <- holt(eggs, h = 100, lambda = lmd)
+autoplot(fit_h3)
+```
+
+#### Exercise 8
+
+```{r}
+retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+
+my_retail <- ts(retail[,"A3349335T"], 
+                frequency=12,
+                start=c(1982,4))
+
+autoplot(my_retail)
+
+# Holt-Winter
+fit_hw <- hw(my_retail, h=8)
+acc1 <- accuracy(fit_hw)[,c("RMSE","MAE", "MAPE","MASE")]
+
+fit_hw_d <- hw(my_retail, h=8, damped = TRUE)
+acc2 <- accuracy(fit_hw_d)[,c("RMSE","MAE", "MAPE","MASE")]
+
+data.frame(Accuracy_HW = acc1, Accuracy_HW_d=acc2)
+
+autoplot(window(my_retail, start=c(2010,1)), series="Retail") +
+  autolayer(fit_hw, series="Holt-Winter", PI=F) +
+  autolayer(fit_hw_d, series="Holt-Winter (damped)", PI=F) +
+  ggtitle("Retail sales") +
+  xlab("Year") +
+  ylab("Sales volume") + 
+  guides(colour=guide_legend(title="Forecast"))
+
+checkresiduals(fit_hw)
+
+```
 
 
+#### Exercise 9
+
+- STL decomposition applied to the Box-Cox transformed series
+- ETS on the seasonally adjusted data
+
+#### Exercise 10
+
+```{r}
+autoplot(ukcars)
+ggseasonplot(ukcars)
+ggsubseriesplot(ukcars)
+
+# Decmpose using stl
+ukcars %>% 
+  stl(t.window=13, s.window="periodic", robust=TRUE) -> fit
+
+autoplot(fit)
+``` 
+
+- Foreast two years
+- Use additive trend method applied to seasonally adjusted data
+
+```{r}
+# forecast additive damped trend
+fc1 <- stlf(seasadj(fit), etsmodel="AAN", damped=TRUE, h=8)
+autoplot(fc1)
+
+# forecast Holt's linear method
+fc2 <- holt(seasadj(fit), damped=FALSE, h=8)
+autoplot(fc2)
+
+# ets model
+fit_ets <- ets(ukcars)
+
+fc3 <- forecast(fit_ets, h=8)
+  
+rbind(accuracy(fc1), accuracy(fc2), accuracy(fc3))
+
+#
+checkresiduals(fc1)
+
+```
+
+#### Exercise 11
