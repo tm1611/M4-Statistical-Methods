@@ -319,10 +319,67 @@ s_t &=  s_{t-m}(1+ \gamma \varepsilon_t).
 \end{align*}
 $$
 
+With multiplicative errors, the residuals are not equivalent to the one-step training errors. 
+
+```{r}
+cbind("Residuals"=residuals(fit),
+      "Forecast errors"=residuals(fit, type="response")) %>% 
+  autoplot(facet=TRUE) + xlab("Year") + ylab("")
+
+```
+
+## Forecasting with ETS models
+
+ETS point forecasts are equal to the medians of the forecast distributions. For models with only additive components, the forecast distributions are normal, hence medians and means are equal. 
+
+For ETS models with multiplicative errors or multiplicative seasonality, the point forecasts will not be equal to the means of the forecast distributions. 
+
+```{r}
+fit %>% 
+  forecast(h=8) %>% 
+  autoplot() + 
+  ylab("International visitor night in Australia (millions)")
+```
 
 
+#### Prediction intervals 
+
+- Advantage: Prediction intervals (PI) can be generated
+- PI will differ between models with additive and multiplicative methods.
+
+$$
+\hat{y}_{T+h|T} \pm c \sigma_h
+$$
+
+where c depends on the coverage probability, and $\sigma_h^2$ is the forecast variance. The following table give the formulas for the additive ETS models (which are the simplest). 
+
+![](images/forecastvariances.png)
+
+#### Using `forecast()`
+
+Explanations of some new arguments: 
+
+- `simulate()`: If `simulate=TRUE`, predicion intervals are produced by simultion rather than algebraic formulas. Simlation will also be used where there are no algebraic formulas available for the particular model. 
+- If `bootstrap=TRUE` and `simulate=TRUE`, then the simulated prediction intervals use re-sampled errors rather than normally distributed errors. 
+- `npaths`: The number of sample paths used in computing simulated prediction intervals. 
+- `biasadj`: If `lambda` is not `NULL`, the back-transformed forecasts (and PI) are bias-adjusted.
+
+## Exercises
+
+#### Ex.1
+
+```{r}
+autoplot(pigs)
+
+fit <- ses(pigs, h=4)
+autoplot(fit)
+
+summary(fit)
+
+# 95% PI
 
 
+```
 
 
 
