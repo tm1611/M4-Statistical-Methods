@@ -1,6 +1,6 @@
 ### Benchmark methods and Measures
 
-# pre
+# prep
 rm(list=ls())
 graphics.off()
 
@@ -11,7 +11,7 @@ library(ggplot2)
 library(M4comp2018)
 
 #
-str(M4)
+
 names(M4[[1]])
 
 # extract yearly series
@@ -38,6 +38,9 @@ length(train)
 autoplot(train, series = "train", col="black") +
   autolayer(test, series = "test")
   
+# domain-specific data
+
+
 # check ts 40773
 train <- M4[[40773]]$x
 test <- M4[[40773]]$xx
@@ -49,7 +52,7 @@ rm(list=setdiff(ls(), c("train","test")))
 autoplot(train, series="train", color="black") +
   autolayer(test, series="test", color="red")
 
-### naive/ seasonal naive methods 
+### naive/ seasonal naive methods ###
 # Game plan: working meth on one series, extend
 # fh: forecast horizon (aka as h in other functions)
 
@@ -69,15 +72,23 @@ give_fh <- function(input){
     fh <- 48
   }
 }
-  
 fh <- give_fh(train)
 
 f1 <- naive(train, h=fh)
 f2 <- snaive(train, h=fh)
 
-autoplot(train, series="train", col="black") +
+autoplot(train) +
   autolayer(f1$mean, series="Naive") +
-  autolayer(f2$mean, series="Seasonal Naive")
+  autolayer(f2$mean, series="Seasonal Naive") +
+  ggtitle("Forecasts from naive methods") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# Calculate SMAPE
+
+
+
+
+
 
 
 
