@@ -44,7 +44,7 @@ names(M4[[1]])
 #### Data description
 The dataset M4 consists of a list of 100,000 time series from different domains and different frequencies: 
 
-```{r, fig.cap="" , out.width="70%"}
+```{r, echo=FALSE, out.width="80%"}
 knitr::include_graphics("images/series_overview.png")
 ```
 
@@ -81,9 +81,12 @@ yearly_M4 <- Filter(function(l) l$period =="Yearly", M4)
 length(yearly_M4)
 
 # number for one of the yearly ts
-nr <- 18
-train <- yearly_M4[[nr]]$x
-test <- yearly_M4[[nr]]$xx
+nr <- 2312
+train1 <- yearly_M4[[nr]]$x
+test1 <- yearly_M4[[nr]]$xx
+
+length(train1)
+
 ```
 
 In addition, one individual series has been selected, i.e. the 18th yearly series (no specific reason for 18). There are `r length(yearly_M4)` yearly time series. See the following table for a more complete overview. 
@@ -91,8 +94,8 @@ In addition, one individual series has been selected, i.e. the 18th yearly serie
 We can plot the extracted series in the following way: 
 
 ```{r}
-autoplot(train) +
-  autolayer(test, series="test")
+autoplot(train1) +
+  autolayer(test1, series="test1")
 ``` 
 
 Similarly, we can extract monthly series by specifying "Monthly" instead of "Yearly". Data can be selected by period using: 
@@ -104,11 +107,12 @@ Similarly, we can extract monthly series by specifying "Monthly" instead of "Yea
 monthly_M4 <- Filter(function(l) l$period=="Monthly", M4)
 length(monthly_M4)
 
-train <- monthly_M4[[nr]]$x
-test <- monthly_M4[[nr]]$xx 
+nr <- 123
+train2 <- monthly_M4[[nr]]$x
+test2 <- monthly_M4[[nr]]$xx 
 
-autoplot(train) +
-  autolayer(test, series = "test")
+autoplot(train2) +
+  autolayer(test2, series = "test2")
 ```  
 
 #### Extract (domain) type-specific data
@@ -119,27 +123,53 @@ In a related way we can filter the data by domain. Possible domains are:
 
 ```{r}
 # 
-micro_M4 <- Filter(function(l) l$type=="Micro", M4)
-length(micro_M4)
+macro_M4 <- Filter(function(l) l$type=="Macro", M4)
+length(macro_M4)
 
 # select series
-nr <- 16
-train <- micro_M4[[nr]]$x
-test <- micro_M4[[nr]]$xx
+nr <- 14110
+train3 <- macro_M4[[nr]]$x
+test3 <- macro_M4[[nr]]$xx
+
+macro_M4[[nr]]$period
 
 # plot 
+autoplot(train3) +
+  autolayer(test3, series="test3")
+```
+
+From here, we'll use one individual series for illustration purposes: 
+
+```{r}
+# check ts 40773
+train <- M4[[40773]]$x
+test <- M4[[40773]]$xx
+
+# plot
 autoplot(train) +
   autolayer(test, series="test")
 ```
 
-#### Forecast horizon
+In order to free up memory, we'll clear the environment from the data except the training and testing sets. On my machine this cleared up roughly 1GB of working memory.
+
+```{r}
+# clear-memory-except
+rm(list=setdiff(ls(), ls()[grep(pattern=c("test|train"), x=ls())] ) )
+  
+# Only keep train, test data                  
+# rm(list=setdiff(ls(), c("train","test")))
+```
+
+Next, we'll go over some functions that will be used in later stages of this project, i.e. functions to calculate the competitions's accuracy measures, forecast horizons, seasonality test, etc. 
+
+## Forecast horizon
 The objective of the competition was to predict point estimates and 95% prediction intervals (PI). Forecasting horizons were specified based on the frequency: 
 
-```{r, fig.cap="" , out.width="25%"}
+```{r, echo=FALSE, out.width="35%"}
 knitr::include_graphics("images/forecasthorizon.png")
 ```
 
-The forecast horizon can be determined using: 
+The forecast horizon can be determined using the  `give_fh` function: 
 
 ```{r}
 # give_fh
@@ -159,23 +189,103 @@ give_fh <- function(input){
   }
   return(fh)
 }
+
+# Example 
+give_fh(test)
 ```
 
+## Forecast accuracy measures
 Ranks in the competition were determined by overall weighted average (OWA) of two accuracy measures:
 
 - Symmetric mean absolute percentage error (sMAPE)
 - Mean absolute scaled error (MASE)
 
-```{r, fig.cap="" , out.width="50%"}
-knitr::include_graphics("images/forecastmeasures.png")
-```
+#### Scale-dependent errors 
+As the data of the competition have different units, scale-dependent measures can not be used to make comparisons between them. Hence, the competition uses the percentage error measure of sMAPE and the scaled error measure MASE.
 
-where
+#### Symmetric mean absolute percentage error (sMAPE)
+
+- Belongs to the class of **percentage errors**
+- based on the  percentage error: $p_t = 100 \times (e_t / y_t)$
+- sMAPE is a modified version of mean absolute percentage error (MAPE): $MAPE = mean(|p_t|)$
+- advantage of being unit-free
+- disadvantage of being infinite or undefined if $y_t = 0$ for any t in the period of interest, and having extreme values if any $y_t$ is close to zero.
+
+Hyndman and Koehler (2006) recommend that the sMAPE not be used (TM: But why they use it in 2018?). 
+
+$$
+\begin{align*}
+sMAPE = \frac{1}{h} \sum_{t=1}^h \frac{2 \,|Y_t-\hat{Y}_t |}{|Y_t| + |\hat{Y}_t|}
+\end{align*}
+$$
 
 - $Y_t$: Post sample value (also denoted as  `outsample` later on)
 - $\hat{Y}_t$: Estimated forecast
 - $h$: forecasting horizon
 - $m$: frequency of the data
+
+```{r}
+# sMAPE calculation function
+cal_sMAPE <- function(outsample, forecasts){ 
+  outsample <- as.numeric(outsample)
+  forecasts <- as.numeric(forecasts)
+  num <- abs(outsample-forecasts)*2
+  denom <- abs(outsample) + abs(forecasts)
+  
+  smape <- mean(num/denom, na.rm=TRUE)
+  return(smape)
+}
+```
+
+#### Mean absolute scaled error (MASE)
+As an alternative to percentage errors Hyndman and Koehler (2006) propose **scaled errors** such as the MASE when comparing forecast accuracy across series with different units. 
+
+- Scaling using the Mean absolute error (MAE) from a simple forecast method
+- Simple forecast method usually naive method or seasonal naive method. 
+- Based on naive / seasonal naive a forecast error $e_j$ is constructed.
+- $e_j$ is scaled (see denominator).
+
+$$
+\begin{align*}
+MASE = \frac{1}{h} \, \frac{ \sum_{t=1}^h |Y_t - \hat{Y}_t| }{ \frac{1}{n-m} \sum_{t=m+1}^n |Y_t - Y_{t-m}|}
+\end{align*}
+$$
+In case of non-seasonal data $m=1$. Thus, $Y_t - Y_{t-m} = Y_t - Y_{t-1}$ being the naive forecast error, yielding the non-seasonal version of MASE:
+
+$$
+\begin{align*}
+MASE = \frac{1}{h} \, \frac{ \sum_{t=1}^h |Y_t - \hat{Y}_t| }{ \frac{1}{n-1} \sum_{t=m+1}^n |Y_t - Y_{t-1}|}
+\end{align*}
+$$
+
+```{r}
+# Calculate MASE
+
+
+```
+
+#### Seasonality Test
+The following seasonality test is used to determine whether a time series is seasonal. Based on the results of this test either a naive or seasonal naive method is used for the MASE. 
+
+```{r}
+SeasonalityTest <- function(input, ppy){
+  #Used to determine whether a time series is seasonal
+  tcrit <- 1.645
+  if (length(input)<3*ppy){
+    test_seasonal <- FALSE
+  }else{
+    xacf <- acf(input, plot = FALSE)$acf[-1, 1, 1]
+    clim <- tcrit/sqrt(length(input)) * sqrt(cumsum(c(1, 2 * xacf^2)))
+    test_seasonal <- ( abs(xacf[ppy]) > clim[ppy] )
+    
+    if (is.na(test_seasonal)==TRUE){ test_seasonal <- FALSE }
+  }
+  
+  return(test_seasonal)
+}
+```
+
+## Application
 
 In the following we'll apply some benchmark methods and the respective measures on one monthly series. In a later step, we'll progress in the following way, collecting measures of accuracy: 
 
@@ -183,21 +293,37 @@ In the following we'll apply some benchmark methods and the respective measures 
 - Apply framework to all "Monthly" time series 
 - Apply to all data in the M4Comp2018 dataset
 
-## Application to individual time series
+So far, we have collected 4 time series with train and test data: 
+
+- `train`, `test`: Monthly, $n=178$
+- `train1`, `test1`: Yearly, $n=41$  
+- `train2`, `test2`: Monthly, $n=822$
+- `train3`, `test3`: Quarterly, $n=126$
+
+#### Application to individual time series
 
 ```{r}
-# check ts 40773
-train <- M4[[40773]]$x
-test <- M4[[40773]]$xx
-give_fh(train)
+# Example: train, test
+fh <- give_fh(train)
 
-# clear-memory-except
-rm(list=setdiff(ls(), c("train","test")))
+# naive forecast
+f1 <- naive(train, h=fh)$mean
 
-# plot
+# seasonal naive 
+f2 <- snaive(train, h=fh)$mean
+
+# plot series and s/naive forecasts
 autoplot(train) +
-  autolayer(test, series="test")
+  autolayer(f1, series="Naive") +
+  autolayer(f2, series="Seasonal Naive") +
+  ggtitle("Forecasts from naive methods") +
+  guides(colour=guide_legend(title="Forecast"))
+
+# Seasonality?
+
+
 ```
+
 
 
 
