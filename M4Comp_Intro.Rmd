@@ -42,6 +42,7 @@ names(M4[[1]])
 ```
 
 #### Data description
+
 The dataset M4 consists of a list of 100,000 time series from different domains and different frequencies: 
 
 ```{r, echo=FALSE, out.width="80%"}
@@ -155,14 +156,12 @@ In order to free up memory, we'll clear the environment from the data except the
 ```{r}
 # clear-memory-except
 rm(list=setdiff(ls(), ls()[grep(pattern=c("test|train"), x=ls())] ) )
-  
-# Only keep train, test data                  
-# rm(list=setdiff(ls(), c("train","test")))
 ```
 
 Next, we'll go over some functions that will be used in later stages of this project, i.e. functions to calculate the competitions's accuracy measures, forecast horizons, seasonality test, etc. 
 
 ## Forecast horizon
+
 The objective of the competition was to predict point estimates and 95% prediction intervals (PI). Forecasting horizons were specified based on the frequency: 
 
 ```{r, echo=FALSE, out.width="35%"}
@@ -238,6 +237,7 @@ cal_sMAPE <- function(outsample, forecasts){
 ```
 
 #### Mean absolute scaled error (MASE)
+
 As an alternative to percentage errors Hyndman and Koehler (2006) propose **scaled errors** such as the MASE when comparing forecast accuracy across series with different units. 
 
 - Scaling using the Mean absolute error (MAE) from a simple forecast method
@@ -281,6 +281,7 @@ cal_MASE <- function(insample, outsample, forecasts){
 ```
 
 #### Seasonality Test
+
 The following seasonality test is used to determine whether a time series is seasonal. Based on the results of this test either a naive or seasonal naive method is used for the MASE. 
 
 ```{r}
@@ -350,6 +351,7 @@ cal_MASE(insample = train, outsample = test, forecasts = f2)
 ```
 
 #### Overall weighted average
+
 The main measure evaluated is the overall weighted average (OWA) of the aforementioned two accuracy measures (sMAPE, MASE). To get the OWA: 
 
 - Divide errors (sMAPE, MASE) by the error of the naive forecast based on deseasonalized data (naive2). This yields **relative MASE** and **relative sMAPE**
@@ -359,6 +361,7 @@ The main measure evaluated is the overall weighted average (OWA) of the aforemen
 Accordingly, we first need to decompose the series which we'll do in the next section before returning in order to calculate the OWA. 
 
 ## Time Series Decomposition
+
 Some of the benchmark methods as well as the naive2 method for the calculation of the relative versions of MASE and sMAPE require a decomposition of the time series. The forecast methods are then applied on the deseasonalized series. 
 
 When time series are decomposed into components, usually the individual components are: 
@@ -388,6 +391,7 @@ In both cases:
 Seasonally adjusted series contain the remaineder component as well as the trend-cycle.
 
 #### Classical decomposition
+
 To decompose a time series into seasonal, trend and irregular components the M4 competition benchmarks use the so-called **classical decomposition** based on moving averages. In R, the decomposition can be calculated using the `decompose()` function.
 
 There are two forms of the classical decomposition: 
@@ -398,6 +402,7 @@ There are two forms of the classical decomposition:
 In the additive version of the classical decomposition the seasonal component is assumed to be constant, whereas for multiplicative seasonality the seasonality is varying. In the M4 competition the "multiplicative" version is used, which will therefore be introduced and demonstrated here. The additive decomposition, however, works similar. 
 
 #### Multiplicative decomposition
+
 Description follows Hyndman and Athanosopoulos (2018):
 
 - **Step 1:** If $m$ is an even number, compute the trend-cycle component $\hat{T}_t$ using a 
@@ -413,9 +418,9 @@ dec <- decompose(train, type="multiplicative")
 # plot
 autoplot(dec) +
   xlab("Year")
-####
+```
 
-# seasonal adjustement function
+```{r}
 seas_adj <- function(input){
   # estimate seasonaly adjused series if seasonal
   # does not adjust if there is no season
@@ -443,19 +448,8 @@ seas_adj <- function(input){
 
 des_train <- seas_adj(train)$des_input
 SIout <- seas_adj(train)$SIout
-
-autoplot(train) +
-  autolayer(des_train, series="train (des.)")
-
-# mean difference to des
-mean(abs(train - des_train), na.rm=TRUE)
 ```
 
-## Benchmark methods
 
-The M4 competition includes 8 benchmark methods. This document follows the notation enumerating them from `f1` to `f8`. `h` indicates the frequency-specific forecast horizon which is given by `give_fh(input)`. In general, `input` indicates the time series in the original form and `des_input` indicates the deseasonalized version of the series using `seas_adj(input)$des_input`. `SIout` gives the seasonal component which is added to the deseasonalized forecast and can be obtained using `seas_adj(input)$SIout`:
 
-- `f1`: **Naive** method using `naive(input, h=fh)$mean` resulting in a point forecast 
-- `f2`: **Seasonal naive** method using `snaive(input, h=fh)`
-- `f3`: **Naive2**, naive method applied on deseasonalized input using `naive(des_input, h=fh)$mean`
-- `f4`: **Simple exponential smoothing** using `ses(des_input) 
+
