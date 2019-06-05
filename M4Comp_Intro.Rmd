@@ -261,6 +261,22 @@ $$
 ```{r}
 # Calculate MASE
 
+cal_MASE <- function(insample, outsample, forecasts){
+  frq <- frequency(insample)
+  forecastsNaiveSD <- rep(NA, frq)
+
+  for (j in (frq+1): length(insample)){
+    forecastsNaiveSD <- c(forecastsNaiveSD, insample[j-frq])
+  }
+
+  masep <- mean(abs(insample - forecastsNaiveSD),na.rm=TRUE)
+  outsample <- as.numeric(outsample)
+  forecasts <- as.numeric(forecasts)
+
+  mase <- mean((abs(outsample - forecasts)) / masep)
+
+  return(mase)
+}
 
 ```
 
@@ -305,6 +321,7 @@ So far, we have collected 4 time series with train and test data:
 ```{r}
 # Example: train, test
 fh <- give_fh(train)
+fh 
 
 # naive forecast
 f1 <- naive(train, h=fh)$mean
@@ -314,15 +331,47 @@ f2 <- snaive(train, h=fh)$mean
 
 # plot series and s/naive forecasts
 autoplot(train) +
+  autolayer(test, series="test") +
   autolayer(f1, series="Naive") +
   autolayer(f2, series="Seasonal Naive") +
   ggtitle("Forecasts from naive methods") +
   guides(colour=guide_legend(title="Forecast"))
 
 # Seasonality?
+SeasonalityTest(train, frequency(train))
 
+# sMAPE
+cal_sMAPE(outsample = test, forecasts = f1)
+cal_sMAPE(outsample = test, forecasts = f2)
 
+# MASE
+cal_MASE(insample = train, outsample = test, forecasts = f1)
+cal_MASE(insample = train, outsample = test, forecasts = f2)
 ```
+
+#### Overall weighted average
+The main measure evaluated is the overall weighted average (OWA) of the aforementioned two accuracy measures (sMAPE, MASE). To get the OWA: 
+
+- Divide errors (sMAPE, MASE) by the error of the naive forecast based on deseasonalized data (naive2). This yields **relative MASE** and **relative sMAPE**
+- Different to seasonal naive forecast!
+- Compute OWA by averaging the relative MASE and relative sMAPE
+
+Accordingly, we first need to decompose the series which we'll do in the next section before returning in order to calculate the OWA. 
+
+## Classical decomposition
+To decompose a time series into seasonal, trend and irregular components the **classical decomposition** is used based on moving averages. In R, the decomposition can be calculated using the `decompose()` function.
+
+There are two forms of classical decomposition: 
+
+- additive decomposition 
+- multiplicative decomposition
+
+In classical decomposition the seasonal component is assumed to be constant, whereas for multiplicative seasonality the seasonality is varying. In the M4 competition the "multiplicative" version is used, which will therefore be explained here. The additive decomposition, however, works similar. 
+
+
+
+
+
 
 
 
