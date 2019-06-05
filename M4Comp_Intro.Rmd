@@ -87,7 +87,6 @@ train1 <- yearly_M4[[nr]]$x
 test1 <- yearly_M4[[nr]]$xx
 
 length(train1)
-
 ```
 
 In addition, one individual series has been selected, i.e. the 18th yearly series (no specific reason for 18). There are `r length(yearly_M4)` yearly time series. See the following table for a more complete overview. 
@@ -420,8 +419,63 @@ autoplot(dec) +
   xlab("Year")
 ```
 
+```{r}
+# classical decomposition of train
+dec <- decompose(train, type="multiplicative")
 
+# plot
+autoplot(dec) +
+  xlab("Year")
+```
 
+```{r}
+seas_adj <- function(input){
+  # estimate seasonaly adjused series if seasonal
+  # does not adjust if there is no season
+  fh <- give_fh(input)
+  ppy <- frequency(input)
+  ST <- F
 
+  if(ppy > 1){
+    ST<- SeasonalityTest(input, ppy)
+  }
 
+  if(ST==T){
+    dec <- decompose(input, type="multiplicative")
+    des_input <- train/dec$seasonal
+    n_seas <- length(dec$seasonal)
+    # 
+    SIout <- head(rep(dec$seasonal[(n_seas - ppy+1): n_seas ],fh), fh)
+  }else{
+    des_input <- input
+    SIout <- rep(1, fh)
+  }
+  output <- list(des_input=des_input, SIout=SIout)
+  return(output)
+}
+
+des_train <- seas_adj(train)$des_input
+SIout <- seas_adj(train)$SIout
+```
+
+```{r}
+autoplot(train) +
+  autolayer(des_train, series="train (des.)")
+
+# mean difference to des
+mean(abs(train - des_train), na.rm=TRUE)
+```
+
+## Benchmark methods
+
+The M4 competition includes 8 benchmark methods. This document follows the notation enumerating them from `f1` to `f8`. `h` indicates the frequency-specific forecast horizon which is given by `give_fh(input)`. 
+
+In general, `input` indicates the time series in the initial form and `des_input` indicates the deseasonalized version of the series using `seas_adj(input)$des_input`. 
+
+`SIout` gives the seasonal component which is added to the deseasonalized forecast and can be obtained using `seas_adj(input)$SIout`:
+
+- **Naive** (`f1`): Naive method using using `naive(input, h=fh)$mean` resulting in a point forecast 
+- **Seasonal Naive** (`f2`) : Seasonal naive method using `snaive(input, h=fh)$mean`
+- **Naive2** (`f3`): Naive method applied on deseasonalized input using `naive(des_input, h=fh)$mean`
+- **Simple exponential smoothing** (`f4`): SES method using `ses(des_input, h=fh)$mean` 
 
