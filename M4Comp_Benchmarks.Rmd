@@ -1,0 +1,241 @@
+---
+title: "Benchmark methods"
+author: "Timo Meiendresch"
+date: "05/06/2019"
+knit: (function(input_file, encoding) {
+  out_dir <- 'html_outputs';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir, 'M4Comp_Benchmarks.html'))})
+---
+# Introduction 
+The main purpose of this document is to introduce the benchmark methods used in the M4 Competition. Before going over them we need some methods and functions from previous parts. 
+
+### Load data and libraries
+
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
+```
+
+```{r, message=FALSE}
+# standard libraries
+library(forecast)
+library(ggplot2)
+library(M4comp2018)
+```
+
+```{r}
+# load data
+data(M4)
+names(M4[[1]])
+```
+
+```{r}
+# check ts 40773
+train <- M4[[40773]]$x
+test <- M4[[40773]]$xx
+
+# clear-memory-except
+rm(list=setdiff(ls(), ls()[grep(pattern=c("test|train"), x=ls())] ) )
+
+# plot
+autoplot(train) +
+  autolayer(test, series="test")
+```
+
+### Load required functions 
+
+```{r}
+# forecast horizon
+give_fh <- function(input){
+  if(frequency(input)==1){
+    fh <- 6
+  } else if(frequency(input)==4){
+    fh <- 8
+  } else if(frequency(input)==12){
+    fh <- 18
+  } else if(frequency(input)==52){
+    fh <- 13
+  } else if(frequency(input)==365){
+    fh <- 14
+  } else if(frequency(input)==8760){
+    fh <- 48
+  }
+  return(fh)
+}
+
+# Calculate sMAPE
+cal_sMAPE <- function(outsample, forecasts){ 
+  outsample <- as.numeric(outsample)
+  forecasts <- as.numeric(forecasts)
+  num <- abs(outsample-forecasts)*2
+  denom <- abs(outsample) + abs(forecasts)
+  
+  smape <- mean(num/denom, na.rm=TRUE)
+  return(smape)
+}
+
+# Calculate MASE
+cal_MASE <- function(insample, outsample, forecasts){
+  frq <- frequency(insample)
+  forecastsNaiveSD <- rep(NA, frq)
+
+  for (j in (frq+1): length(insample)){
+    forecastsNaiveSD <- c(forecastsNaiveSD, insample[j-frq])
+  }
+
+  masep <- mean(abs(insample - forecastsNaiveSD),na.rm=TRUE)
+  outsample <- as.numeric(outsample)
+  forecasts <- as.numeric(forecasts)
+
+  mase <- mean((abs(outsample - forecasts)) / masep)
+
+  return(mase)
+}
+
+# Check if series is seasonal
+SeasonalityTest <- function(input, ppy){
+  #Used to determine whether a time series is seasonal
+  tcrit <- 1.645
+  if (length(input)<3*ppy){
+    test_seasonal <- FALSE
+  }else{
+    xacf <- acf(input, plot = FALSE)$acf[-1, 1, 1]
+    clim <- tcrit/sqrt(length(input)) * sqrt(cumsum(c(1, 2 * xacf^2)))
+    test_seasonal <- ( abs(xacf[ppy]) > clim[ppy] )
+    
+    if (is.na(test_seasonal)==TRUE){ test_seasonal <- FALSE }
+  }
+  return(test_seasonal)
+}
+
+# seasonal adjustment function
+seas_adj <- function(input){
+  # estimate seasonaly adjused series if seasonal
+  fh <- give_fh(input)
+  ppy <- frequency(input)
+  ST <- F
+
+  if(ppy > 1){
+    ST<- SeasonalityTest(input, ppy)
+  }
+
+  if(ST==T){
+    dec <- decompose(input, type="multiplicative")
+    des_input <- train/dec$seasonal
+    n_seas <- length(dec$seasonal)
+    # 
+    SIout <- head(rep(dec$seasonal[(n_seas - ppy+1): n_seas ],fh), fh)
+  }else{
+    des_input <- input
+    SIout <- rep(1, fh)
+  }
+  output <- list(des_input=des_input, SIout=SIout)
+  return(output)
+}
+
+# testing the functions
+fh <- give_fh(train)
+fh
+SeasonalityTest(train, frequency(train))
+
+# naive / seasonal naive forecasts for sMAPE/MASE
+f1 <- naive(train, h=fh)$mean
+f2 <- snaive(train, h=fh)$mean
+
+# Accuracy measures f2
+cal_MASE(insample = train, outsample = test, forecasts = f1)
+cal_sMAPE(outsample = test, forecasts = f1)
+
+# Accuracy measures f2
+cal_MASE(insample = train, outsample = test, forecasts = f2)
+cal_sMAPE(outsample = test, forecasts = f2)
+
+# plot forecasts (zoomed in)
+autoplot(window(train, start=c(2009))) + 
+  autolayer(f1, series="Naive") +
+  autolayer(f2, series="Seasonal Naive") +
+  autolayer(test, series="test") +
+  guides(col=guide_legend(title="Series")) +
+  ggtitle("Comparing Naive methods") + 
+  xlab("Year") + ylab("Value")
+```
+
+# Benchmark methods 
+
+The M4 competition includes 8 benchmark methods. This document follows the notation enumerating them from `f1` to `f8`. `h` indicates the frequency-specific forecast horizon which is given by `give_fh(input)`. 
+
+In general, `input` indicates the time series in the initial form and `des_input` indicates the deseasonalized version of the series using `seas_adj(input)$des_input`. 
+
+`SIout` gives the seasonal component which is added to the deseasonalized forecast and can be obtained using `seas_adj(input)$SIout`:
+
+- **Naive method** `(f1)`: Naive method using `naive(input, h=fh)$mean`. Forecast is simply the value of the last observation, 
+$$
+\hat{y}_{t+1} = y_{t}
+$$
+
+- **Seasonal Naive** `(f2)`: Seasonal naive method using `snaive(input, h=fh)$mean`. Each forecast to be equal to the last observed value from the same season
+$$
+\hat{y}_{T+h|T} = y_{T+h-m (k+1)}
+$$
+- **Naive2** `(f3)`: Naive method applied on deseasonalized input using `naive(des_input, h=fh)$mean`. Used for scaling the sMAPE error. 
+- **Simple exponential smoothing** (`f4`): SES forecasts are calculated using weighted averages, where the weights decrease exponentially (`ses(des_input, h=fh)$mean`)
+$$
+\begin{align*}
+  \text{Forecast equation}  && \hat{y}_{t+h|t} & = \ell_{t}\\
+  \text{Smoothing equation} && \ell_{t}        & = \alpha y_{t} + (1 - \alpha)\ell_{t-1},
+\end{align*}
+$$
+- **Holt's method** `(f5)`: Extension of SES to include a trend
+$$
+\begin{align*}
+  \text{Forecast equation}&& \hat{y}_{t+h|t} &= \ell_{t} + hb_{t} \\
+  \text{Level equation}   && \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  \text{Trend equation}   && b_{t}    &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)b_{t-1},
+\end{align*}
+$$
+- **Holt's method (damped trend)** `(f6)`: Constant trend often leads to overforecasting. Holt's method is modified by adding a parameter that "dampens" the trend
+$$
+\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + (\phi+\phi^2 + \dots + \phi^{h})b_{t} \\
+  \ell_{t} &= \alpha y_{t} + (1 - \alpha)(\ell_{t-1} + \phi b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)\phi b_{t-1}.
+\end{align*}
+$$
+- **Theta method** `(f7)`: Assimakopoulos and Nikolopoulos (2000) 
+- **Combination method**: Simple combination of SES, Holt's method and damped Holt's method, i.e. `Comb=(f4+f5+f6)/3`. 
+
+## Individual Application 
+
+In this section we'll apply the benchmark methods to an individual time series that we've already used for naive and seasonal naive forecats. In addition, we calculate the respective accuracy measures **sMAPE**, **MASE** (requires naive2) and, finally, the overall weighted average **OWA**.
+
+```{r}
+
+benchmarks <- function(input, fh=give_fh(input)){ 
+  des_input <- seas_adj(input)$des_input
+  SIout <- seas_adj(input)$SIout
+
+  f1 <- naive(input, h=fh)$mean # naive
+  f2 <- snaive(input, h=fh)$mean # snaive
+  f3 <- naive(des_input, h=fh)$mean*SIout # naive2
+  f4 <- ses(des_input, h=fh)$mean*SIout # ses
+  f5 <- holt(des_input, h=fh, damped=FALSE)$mean*SIout # holt
+  f6 <- holt(des_input, h=fh, damped=TRUE)$mean*SIout # damped holt
+  f8 <- (f4+f5+f6)/3 # comb
+  
+  output <- list(f1=f1, f2=f2, f3=f3, f4=f4, f5=f5, f6=f6, f8=f8)
+  return(output)
+}
+
+benchmarks(input = train)
+
+
+
+```
+
+
+
+
+
+
