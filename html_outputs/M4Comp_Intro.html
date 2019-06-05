@@ -591,7 +591,24 @@ MASE = \frac{1}{h} \, \frac{ \sum_{t=1}^h |Y_t - \hat{Y}_t| }{ \frac{1}{n-m} \su
 MASE = \frac{1}{h} \, \frac{ \sum_{t=1}^h |Y_t - \hat{Y}_t| }{ \frac{1}{n-1} \sum_{t=m+1}^n |Y_t - Y_{t-1}|}
 \end{align*}
 \]</span></p>
-<pre class="r"><code># Calculate MASE</code></pre>
+<pre class="r"><code># Calculate MASE
+
+cal_MASE &lt;- function(insample, outsample, forecasts){
+  frq &lt;- frequency(insample)
+  forecastsNaiveSD &lt;- rep(NA, frq)
+
+  for (j in (frq+1): length(insample)){
+    forecastsNaiveSD &lt;- c(forecastsNaiveSD, insample[j-frq])
+  }
+
+  masep &lt;- mean(abs(insample - forecastsNaiveSD),na.rm=TRUE)
+  outsample &lt;- as.numeric(outsample)
+  forecasts &lt;- as.numeric(forecasts)
+
+  mase &lt;- mean((abs(outsample - forecasts)) / masep)
+
+  return(mase)
+}</code></pre>
 </div>
 <div id="seasonality-test" class="section level4">
 <h4>Seasonality Test</h4>
@@ -657,7 +674,61 @@ cal_sMAPE(outsample = test, forecasts = f1)</code></pre>
 <pre><code>## [1] 0.1135875</code></pre>
 <pre class="r"><code>cal_sMAPE(outsample = test, forecasts = f2)</code></pre>
 <pre><code>## [1] 0.1527939</code></pre>
-<pre class="r"><code># MASE</code></pre>
+<pre class="r"><code># MASE
+cal_MASE(insample = train, outsample = test, forecasts = f1)</code></pre>
+<pre><code>## [1] 1.462167</code></pre>
+<pre class="r"><code>cal_MASE(insample = train, outsample = test, forecasts = f2)</code></pre>
+<pre><code>## [1] 1.944084</code></pre>
+</div>
+<div id="overall-weighted-average" class="section level4">
+<h4>Overall weighted average</h4>
+<p>The main measure evaluated is the overall weighted average (OWA) of the aforementioned two accuracy measures (sMAPE, MASE). To get the OWA:</p>
+<ul>
+<li>Divide errors (sMAPE, MASE) by the error of the naive forecast based on deseasonalized data (naive2). This yields <strong>relative MASE</strong> and <strong>relative sMAPE</strong></li>
+<li>Different to seasonal naive forecast!</li>
+<li>Compute OWA by averaging the relative MASE and relative sMAPE</li>
+</ul>
+<p>Accordingly, we first need to decompose the series which we’ll do in the next section before returning in order to calculate the OWA.</p>
+</div>
+</div>
+<div id="time-series-decomposition" class="section level2">
+<h2>Time Series Decomposition</h2>
+<p>Some of the benchmark methods as well as the naive2 method for the calculation of the relative versions of MASE and sMAPE require a decomposition of the time series. The forecast methods are then applied on the deseasonalized series.</p>
+<p>When time series are decomposed into components, usually the individual components are:</p>
+<ul>
+<li><strong>trend-cycle</strong> component (sometimes called <strong>trend</strong> for simplicity)</li>
+<li><strong>seasonal component</strong></li>
+<li><strong>remainder component</strong> (everything else)</li>
+</ul>
+<p>Hence, assuming <strong>additive decomposition</strong> we can formulate this as</p>
+<p><span class="math display">\[
+y_{t} = S_{t} + T_{t} + R_t,
+\]</span></p>
+<p>and we’ll formulate a <strong>multiplicative decomposition</strong> as:</p>
+<p><span class="math display">\[
+y_{t} = S_{t} + T_{t} + R_t,
+\]</span></p>
+<p>In both cases:</p>
+<ul>
+<li><span class="math inline">\(S_t\)</span> is the seasonal component</li>
+<li><span class="math inline">\(T_t\)</span> the trend-cycle component</li>
+<li><span class="math inline">\(R_t\)</span> the remainder component</li>
+</ul>
+<div id="classical-decomposition" class="section level4">
+<h4>Classical decomposition</h4>
+<p>To decompose a time series into seasonal, trend and irregular components the <strong>classical decomposition</strong> is used here based on moving averages. In R, the decomposition can be calculated using the <code>decompose()</code> function.</p>
+<p>There are two forms of classical decomposition:</p>
+<ul>
+<li>additive decomposition</li>
+<li>multiplicative decomposition</li>
+</ul>
+<p>In classical decomposition the seasonal component is assumed to be constant, whereas for multiplicative seasonality the seasonality is varying. In the M4 competition the “multiplicative” version is used, which will therefore be explained here. The additive decomposition, however, works similar. Description follows Hyndman and Athanosopoulos (2018):</p>
+</div>
+<div id="multiplicative-decomposition" class="section level4">
+<h4>Multiplicative decomposition</h4>
+<ul>
+<li><strong>Step 1:</strong> If <span class="math inline">\(m\)</span> is an even number, compute the trend-cycle component</li>
+</ul>
 </div>
 </div>
 </div>
