@@ -420,35 +420,7 @@ autoplot(dec) +
   xlab("Year")
 ```
 
-```{r}
-seas_adj <- function(input){
-  # estimate seasonaly adjused series if seasonal
-  # does not adjust if there is no season
-  fh <- give_fh(input)
-  ppy <- frequency(input)
-  ST <- F
 
-  if(ppy > 1){
-    ST<- SeasonalityTest(input, ppy)
-  }
-
-  if(ST==T){
-    dec <- decompose(input, type="multiplicative")
-    des_input <- train/dec$seasonal
-    n_seas <- length(dec$seasonal)
-    # 
-    SIout <- head(rep(dec$seasonal[(n_seas - ppy+1): n_seas ],fh), fh)
-  }else{
-    des_input <- input
-    SIout <- rep(1, fh)
-  }
-  output <- list(des_input=des_input, SIout=SIout)
-  return(output)
-}
-
-des_train <- seas_adj(train)$des_input
-SIout <- seas_adj(train)$SIout
-```
 
 
 

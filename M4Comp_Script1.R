@@ -10,8 +10,6 @@ library(ggplot2)
 #devtools::install_github("carlanetto/M4comp2018")
 library(M4comp2018)
 
-#
-
 names(M4[[1]])
 
 # extract yearly series
@@ -82,8 +80,6 @@ autoplot(train) +
   autolayer(f2$mean, series="Seasonal Naive") +
   ggtitle("Forecasts from naive methods") +
   guides(colour=guide_legend(title="Forecast"))
-
-# Calculate SMAPE
 
 
 
