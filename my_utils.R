@@ -126,10 +126,9 @@ seas_adj <- function(input, fh){
 
 
 ## Benchmarks ##
-benchmarks <- function(input){ 
-  fh <- give_fh(input)
-  des_input <- seas_adj(input)$des_input
-  SIout <- seas_adj(input)$SIout
+benchmarks <- function(input, fh){ 
+  des_input <- seas_adj(input, fh)$des_input
+  SIout <- seas_adj(input, fh)$SIout
   
   f1 <- naive(input, h=fh)$mean # naive
   f2 <- snaive(input, h=fh)$mean # snaive

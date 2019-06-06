@@ -27,13 +27,104 @@ library(ggplot2)
 library(M4comp2018)
 ```
 
-## Load functions from Script
+# Introduction
+
+In the following document we'll apply the benchmark methods on the M4Comp data. We'll start with a small subsample of data that is randomly drawn from the monthly time series. 
+
+## Random sample 
+
+```{r}
+# load data
+data(M4)
+
+# extract monthly series 
+monthly_M4 <- Filter(function(l) l$period=="Monthly", M4)
+
+# set a random seed
+set.seed(16)
+
+# determine sample size
+sample_n <- 10
+idx <- sample(1:length(monthly_M4), size = 10)
+
+# draw sample from monthly data
+monthly_sample <- monthly_M4[idx]
+
+# clear-memory-except
+rm(list=setdiff(ls(), ls()[grep(pattern=c("monthly_sample"), x=ls())] ) )
+```
+
+### Loading functions
+
+The required functions are saved in `my_utils.R` and will now be loaded for usage. 
 
 ```{r}
 # load functions
 source("my_utils.R")
 ```
 
+### Create a container for the sMAPE and MASE data
+
+```{r}
+# benchmark names 
+Names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Com")
+
+#
+data_train = data_test <- monthly_sample
+fh <- monthly_sample[[1]]$h
+
+Total_sMAPE = Total_MASE <- array(NA,dim = c(length(Names_benchmarks), fh, length(data_train)))
+```
+
+```{r}
+nr <- 4
+insample <- data_train[[nr]]$x
+outsample <- data_test[[nr]]$xx
+fc <- benchmarks(input = insample, fh=fh)
+
+cal_MASE(insample, outsample, fc$Naive)
+cal_MASE(insample, outsample, fc$sNaive)
+cal_MASE(insample, outsample, fc$Naive2)
+cal_MASE(insample, outsample, fc$SES)
+cal_MASE(insample, outsample, fc$Holt)
+cal_MASE(insample, outsample, fc$Damped)
+cal_MASE(insample, outsample, fc$Theta)
+cal_MASE(insample, outsample, fc$Comb)
+
+autoplot(insample) +
+  autolayer(outsample, series="test") +
+  autolayer(fc$Naive, series="Naive") +
+  autolayer(fc$sNaive, series="sNaive") +
+  autolayer(fc$SES, series="Naive2") +
+  autolayer(fc$Holt, series="SES")
+
+autoplot(insample) +
+  autolayer(outsample, series = "test") +
+  autolayer(fc$Holt, series = "Holt") +
+  autolayer(fc$Damped, series = "Damped") +
+  autolayer(fc$Theta, series = "Theta") +
+  autolayer(fc$Comb, series= "Comb") 
+
+# more forecasts
+fc1 <- rwf(insample, lambda=BoxCox.lambda(insample), drift=TRUE)$mean
+fc2 <- rwf(insample, lambda=BoxCox.lambda(insample),drift=TRUE, biasadj=TRUE)$mean
+fc3 <- rwf(insample)$mean
+fc4 <- rwf(insample, drift = TRUE)$mean
+
+autoplot(insample) +
+  autolayer(outsample, series="Test") +
+  autolayer(fc1) +
+  autolayer(fc2) +
+  autolayer(fc3) +
+  autolayer(fc4)
+
+for (i in 1:length(data_train)){
+  insample <- data_train[[i]]$x
+  outsample <- data_test[[i]]$xx
+  # forecasts
+  fc <- benchmarks(input = insample, fh = fh)
+}
+```
 
 
 
