@@ -1,0 +1,34 @@
+---
+title: "M4Comp Benchmark Methods Part 2: Automate Benchmark Applications"
+author: "Timo Meiendresch"
+date: "06/06/2019"
+knit: (function(input_file, encoding) {
+  out_dir <- 'html_outputs';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir, 'M4Comp_Benchmarks2.html'))})
+---
+
+# Introduction
+
+In a next step we'll use the previously introduced methods saved in the script `my_utils.R` and apply them to more than one series. The objective is to apply the benchmark methods to a huge dataset (i.e. 100,000 series) and automation using functional programming is required. 
+
+The progression is to first apply the benchmark methods to a smaller subset of 3 time series with different frequencies. Afterwards, we'll use a bigger subset of Monthly (Yearly, Quarterly) data.
+
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
+```
+
+```{r, message=FALSE}
+# standard libraries
+library(forecast)
+library(ggplot2)
+library(M4comp2018)
+```
+
+## Load functions from Script
+
+
+
+
