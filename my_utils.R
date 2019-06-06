@@ -8,9 +8,9 @@
 
 #############
 # libraries #
-library(forecast)
-library(ggplot2)
-library(M4comp2018)
+#library(forecast)
+#library(ggplot2)
+#library(M4comp2018)
 
 #########################
 ### utility functions ### 
@@ -95,8 +95,9 @@ SeasonalityTest <- function(input, ppy){
 
 
 ## Seasonal adjustment function ##
-seas_adj <- function(input){
-  fh <- give_fh(input)
+# seasonal adjustment function
+seas_adj <- function(input, fh){
+  # estimate seasonaly adjused series if seasonal
   ppy <- frequency(input)
   ST <- F
   
@@ -106,7 +107,7 @@ seas_adj <- function(input){
   
   if(ST==T){
     dec <- decompose(input, type="multiplicative")
-    des_input <- train/dec$seasonal
+    des_input <- input/dec$seasonal
     n_seas <- length(dec$seasonal)
     # 
     SIout <- head(rep(dec$seasonal[(n_seas - ppy+1): n_seas ],fh), fh)
@@ -117,6 +118,8 @@ seas_adj <- function(input){
   output <- list(des_input=des_input, SIout=SIout)
   return(output)
 }
+
+
 # to do:
 # can this be further modularized?
 # unit tests

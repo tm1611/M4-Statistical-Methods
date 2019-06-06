@@ -48,102 +48,28 @@ autoplot(train) +
   ggtitle("Time series #40773")
 ```
 
-### Load required functions 
+### Load and test functions 
+Previously introduced functions have been saved in the R-Script `my_utils.R` and can be loaded using the function `source("my_utils.R")`. 
 
 ```{r}
-# forecast horizon
-give_fh <- function(input){
-  if(frequency(input)==1){
-    fh <- 6
-  } else if(frequency(input)==4){
-    fh <- 8
-  } else if(frequency(input)==12){
-    fh <- 18
-  } else if(frequency(input)==52){
-    fh <- 13
-  } else if(frequency(input)==365){
-    fh <- 14
-  } else if(frequency(input)==8760){
-    fh <- 48
-  }
-  return(fh)
-}
+# load utilities
+source("my_utils.R")
+```
 
-# Calculate sMAPE
-cal_sMAPE <- function(outsample, forecasts){ 
-  outsample <- as.numeric(outsample)
-  forecasts <- as.numeric(forecasts)
-  num <- abs(outsample-forecasts)*2
-  denom <- abs(outsample) + abs(forecasts)
-  
-  smape <- mean(num/denom, na.rm=TRUE)
-  return(smape)
-}
-
-# Calculate MASE
-cal_MASE <- function(insample, outsample, forecasts){
-  frq <- frequency(insample)
-  forecastsNaiveSD <- rep(NA, frq)
-
-  for (j in (frq+1): length(insample)){
-    forecastsNaiveSD <- c(forecastsNaiveSD, insample[j-frq])
-  }
-
-  masep <- mean(abs(insample - forecastsNaiveSD),na.rm=TRUE)
-  outsample <- as.numeric(outsample)
-  forecasts <- as.numeric(forecasts)
-
-  mase <- mean((abs(outsample - forecasts)) / masep)
-
-  return(mase)
-}
-
-# Check if series is seasonal
-SeasonalityTest <- function(input, ppy){
-  #Used to determine whether a time series is seasonal
-  tcrit <- 1.645
-  if (length(input)<3*ppy){
-    test_seasonal <- FALSE
-  }else{
-    xacf <- acf(input, plot = FALSE)$acf[-1, 1, 1]
-    clim <- tcrit/sqrt(length(input)) * sqrt(cumsum(c(1, 2 * xacf^2)))
-    test_seasonal <- ( abs(xacf[ppy]) > clim[ppy] )
-    
-    if (is.na(test_seasonal)==TRUE){ test_seasonal <- FALSE }
-  }
-  return(test_seasonal)
-}
-
-# seasonal adjustment function
-seas_adj <- function(input){
-  # estimate seasonaly adjused series if seasonal
-  fh <- give_fh(input)
-  ppy <- frequency(input)
-  ST <- F
-
-  if(ppy > 1){
-    ST<- SeasonalityTest(input, ppy)
-  }
-
-  if(ST==T){
-    dec <- decompose(input, type="multiplicative")
-    des_input <- train/dec$seasonal
-    n_seas <- length(dec$seasonal)
-    # 
-    SIout <- head(rep(dec$seasonal[(n_seas - ppy+1): n_seas ],fh), fh)
-  }else{
-    des_input <- input
-    SIout <- rep(1, fh)
-  }
-  output <- list(des_input=des_input, SIout=SIout)
-  return(output)
-}
-
+```{r} 
 # testing the functions
 fh <- give_fh(train)
 fh
 SeasonalityTest(train, frequency(train))
+```
 
+```{r}
+head(seas_adj(train, give_fh(train) )$des_input)
+
+head(seas_adj(train, give_fh(train))$SIout)
+```
+
+```{r}
 # naive / seasonal naive forecasts for sMAPE/MASE
 f1 <- naive(train, h=fh)$mean
 f2 <- snaive(train, h=fh)$mean
@@ -207,18 +133,21 @@ Theta.classic <- function(input, fh){
   
   return(output)
 }
+```
 
+```{r}
 # Theta method from M4
-theta_classic <- Theta.classic(seas_adj(train)$des_input, fh=give_fh(train))$mean*seas_adj(train)$SIout
+theta_classic <- Theta.classic(seas_adj(train, give_fh(train) )$des_input, fh)$mean*seas_adj(train, give_fh(train))$SIout
 
 # vs built-in theta method
 theta_built_in <- thetaf(train, h=give_fh(train))$mean
 
-autoplot(theta_classic, serie=) +
-  autolayer(theta_built_in)
+# comparison plot
+autoplot(theta_classic) +
+  autolayer(theta_built_in, series="thetaf()")
 ```
 
-Both methods are the same. For simplicity, we'll use the built-in function `thetaf()` from here. 
+Both functions seem to yield the equivalent result. For simplicity, we'll use the built-in function `thetaf()` from here on. 
 
 # Benchmark methods 
 
@@ -270,8 +199,8 @@ In this section we'll apply the benchmark methods to an individual time series t
 
 ```{r}
 benchmarks <- function(input, fh=give_fh(input)){ 
-  des_input <- seas_adj(input)$des_input
-  SIout <- seas_adj(input)$SIout
+  des_input <- seas_adj(input, fh)$des_input
+  SIout <- seas_adj(input, fh)$SIout
 
   f1 <- naive(input, h=fh)$mean # naive
   f2 <- snaive(input, h=fh)$mean # snaive
@@ -304,10 +233,6 @@ sMAPE_Theta
 # MASE: 
 MASE_Theta <- cal_MASE(insample = train, outsample = test, forecasts = benchmarks_train$Theta)
 MASE_Theta
-
-# OWA: 
-
-
 ```
 
 Next step in the progression is to calculate accuracy measures for all benchmark forecasts
