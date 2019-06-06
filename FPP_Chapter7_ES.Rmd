@@ -1,12 +1,12 @@
 ---
-title: "Exponential Smoothing: Part 1"
+title: "FPP Chapter 7: Exponential Smoothing"
 author: "Timo Meiendresch"
 date: "28/05/2019"
 knit: (function(input_file, encoding) {
   out_dir <- 'html_outputs';
   rmarkdown::render(input_file,
   encoding=encoding,
-  output_file=file.path(dirname(input_file), out_dir, 'FPP_7_ES.html'))})
+  output_file=file.path(dirname(input_file), out_dir, 'FPP_Chapter7_ES.html'))})
 ---
 
 ```{r, message=FALSE, echo=FALSE}

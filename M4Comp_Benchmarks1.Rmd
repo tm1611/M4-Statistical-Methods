@@ -1,14 +1,16 @@
 ---
-title: "Benchmark methods"
+title: "Benchmark methods Part 1: Application to one Time Series"
 author: "Timo Meiendresch"
 date: "05/06/2019"
 knit: (function(input_file, encoding) {
   out_dir <- 'html_outputs';
   rmarkdown::render(input_file,
   encoding=encoding,
-  output_file=file.path(dirname(input_file), out_dir, 'M4Comp_Benchmarks.html'))})
+  output_file=file.path(dirname(input_file), out_dir, 'M4Comp_Benchmarks1.html'))})
 ---
+
 # Introduction 
+
 The main purpose of this document is to introduce the benchmark methods used in the M4 Competition. Before going over them we need some methods and functions from previous parts. 
 
 ### Load data and libraries
@@ -41,7 +43,9 @@ rm(list=setdiff(ls(), ls()[grep(pattern=c("test|train"), x=ls())] ) )
 
 # plot
 autoplot(train) +
-  autolayer(test, series="test")
+  autolayer(test, series="test") +
+  xlab("Year") + ylab("value") +
+  ggtitle("Time series #40773")
 ```
 
 ### Load required functions 
@@ -162,6 +166,60 @@ autoplot(window(train, start=c(2009))) +
   xlab("Year") + ylab("Value")
 ```
 
+### Theta method
+The theta method performed surprisingly well in the M3 competition and is therefore included as a benchmark method. Since its original description in 2000, there have been various modifications to this series like the optimised and dynamic theta method. 
+
+```{r}
+Theta.classic <- function(input, fh){
+  #Used to estimate Theta classic
+  
+  #Set parameters
+  wses <- wlrl<-0.5 ; theta <- 2
+  #Estimate theta line (0)
+  observations <- length(input)
+  xt <- c(1:observations)
+  xf <- c((observations+1):(observations+fh))
+  train <- data.frame(input=input, xt=xt)
+  test <- data.frame(xt = xf)
+  
+  estimate <- lm(input ~ poly(xt, 1, raw=TRUE))
+  thetaline0In <- as.numeric(predict(estimate))
+  thetaline0Out <- as.numeric(predict(estimate,test))
+  
+  #Estimate theta line (2)
+  thetalineT <- theta*input+(1-theta)*thetaline0In
+  sesmodel <- ses(thetalineT, h=fh)
+  thetaline2In <- sesmodel$fitted
+  thetaline2Out <- sesmodel$mean
+  
+  #Theta forecasts
+  forecastsIn <- (thetaline2In*wses)+(thetaline0In*wlrl)
+  forecastsOut <- (thetaline2Out*wses)+(thetaline0Out*wlrl)
+  
+  #Zero forecasts become positive
+  for (i in 1:length(forecastsOut)){
+    if (forecastsOut[i]<0){ forecastsOut[i]<-0 }
+  }
+  
+  output=list(fitted = forecastsIn, mean = forecastsOut,
+              fitted0 = thetaline0In, mean0 = thetaline0Out,
+              fitted2 = thetaline2In, mean2 = thetaline2Out)
+  
+  return(output)
+}
+
+# Theta method from M4
+theta_classic <- Theta.classic(seas_adj(train)$des_input, fh=give_fh(train))$mean*seas_adj(train)$SIout
+
+# vs built-in theta method
+theta_built_in <- thetaf(train, h=give_fh(train))$mean
+
+autoplot(theta_classic, serie=) +
+  autolayer(theta_built_in)
+```
+
+Both methods are the same. For simplicity, we'll use the built-in function `thetaf()` from here. 
+
 # Benchmark methods 
 
 The M4 competition includes 8 benchmark methods. This document follows the notation enumerating them from `f1` to `f8`. `h` indicates the frequency-specific forecast horizon which is given by `give_fh(input)`. 
@@ -203,7 +261,7 @@ $$
   b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 -\beta^*)\phi b_{t-1}.
 \end{align*}
 $$
-- **Theta method** `(f7)`: Assimakopoulos and Nikolopoulos (2000) 
+- **Theta method** `(f7)`: Description in Assimakopoulos and Nikolopoulos (2000). Hyndman and Billah (2001) showed that this method yields forecasts equivalently to simple exponential smoothing with drift. 
 - **Combination method**: Simple combination of SES, Holt's method and damped Holt's method, i.e. `Comb=(f4+f5+f6)/3`. 
 
 ## Individual Application 
@@ -211,7 +269,6 @@ $$
 In this section we'll apply the benchmark methods to an individual time series that we've already used for naive and seasonal naive forecats. In addition, we calculate the respective accuracy measures **sMAPE**, **MASE** (requires naive2) and, finally, the overall weighted average **OWA**.
 
 ```{r}
-
 benchmarks <- function(input, fh=give_fh(input)){ 
   des_input <- seas_adj(input)$des_input
   SIout <- seas_adj(input)$SIout
@@ -222,20 +279,71 @@ benchmarks <- function(input, fh=give_fh(input)){
   f4 <- ses(des_input, h=fh)$mean*SIout # ses
   f5 <- holt(des_input, h=fh, damped=FALSE)$mean*SIout # holt
   f6 <- holt(des_input, h=fh, damped=TRUE)$mean*SIout # damped holt
+  f7 <- thetaf(input, h=fh)$mean
   f8 <- (f4+f5+f6)/3 # comb
   
-  output <- list(f1=f1, f2=f2, f3=f3, f4=f4, f5=f5, f6=f6, f8=f8)
+  output <- list(f1=f1, f2=f2, f3=f3, f4=f4, f5=f5, f6=f6, f7=f7, f8=f8)
   return(output)
 }
 
-benchmarks(input = train)
+benchmarks_train <- benchmarks(train)
+str(benchmarks_train)
 
+Names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped","Theta","Comb")
+
+names(benchmarks_train) <- Names_benchmarks
+```
+
+Next step is to evaluate these benchmark forecasts. For each individual forecast this can be done in the following way:  
+
+```{r}
+# sMAPE: Comb
+sMAPE_Theta <- cal_sMAPE(outsample = test, forecasts = benchmarks_train$Theta)
+sMAPE_Theta
+
+# MASE: 
+MASE_Theta <- cal_MASE(insample = train, outsample = test, forecasts = benchmarks_train$Theta)
+MASE_Theta
+
+# OWA: 
 
 
 ```
 
+Next step in the progression is to calculate accuracy measures for all benchmark forecasts
 
+```{r}
+Total_MASE <- rep(NA, length(benchmarks_train))
+Total_sMAPE <- rep(NA, length(benchmarks_train))
 
+for (i in 1:length(benchmarks_train)){
+  Total_MASE[i] <- cal_MASE(insample = train, outsample = test, forecasts = benchmarks_train[[i]])
+
+  Total_sMAPE[i] <- cal_sMAPE(outsample = test, forecasts = benchmarks_train[[i]])
+}
+
+df <- data.frame(Total_MASE, Total_sMAPE, row.names = Names_benchmarks)
+
+# relative MASE
+df$Rel_MASE <- df[,"Total_MASE"] / df[,"Total_MASE"][3]
+
+# relative sMAPE
+df$Rel_sMAPE <- df[,"Total_sMAPE"] / df[,"Total_sMAPE"][3]
+
+# Overall weighted average (OWA) 
+df$OWA <- (df[,"Rel_MASE"] + df[,"Rel_sMAPE"])/2
+```
+
+This yields the following results table for the benchmarking methods on one time series. 
+
+```{r, echo=FALSE, results="asis"}
+library(knitr)
+kable(round(df,4), caption="Results table for series 40773")
+``` 
+
+Next steps: 
+
+- Automate this procedure so it can be applied to specific subsets of the M4 Competition data and finally to the entire M4 Data.
 
 
 
