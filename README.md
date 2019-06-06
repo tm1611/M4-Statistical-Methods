@@ -1,5 +1,5 @@
 # MT1-Statistical-Time-Series-Methods
-Folder one for MT focusing on:
+Folder 1 for MT focusing on:
 
 - Theoretical background
 - Statistical methods, i.e. benchmark methods of M4

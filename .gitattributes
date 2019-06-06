@@ -1,2 +1,2 @@
-html_files/* linguist-vendored
+html_outputs/* linguist-vendored
 *.Rmd linguist-language=R
