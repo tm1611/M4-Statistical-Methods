@@ -1,5 +1,5 @@
 ---
-title: "Benchmark methods Part 1: Application to one Time Series"
+title: "M4Comp Benchmark Methods Part 1: Application to one Time Series"
 author: "Timo Meiendresch"
 date: "05/06/2019"
 knit: (function(input_file, encoding) {
