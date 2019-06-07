@@ -13,7 +13,7 @@ knit: (function(input_file, encoding) {
 
 In a next step we'll use the previously introduced methods saved in the script `my_utils.R` and apply them to more than one series. The objective is to apply the benchmark methods to a huge dataset (i.e. 100,000 series) and automation using abstraction is necessary. 
 
-The progression is to first apply the benchmark methods to a smaller subset of 3 time series with different frequencies. Afterwards, we'll use a bigger subset of Monthly (Yearly, Quarterly) data.
+The progression is to first apply the benchmark methods to a smaller subset of 3 time series with different frequencies. Afterwards, we'll use a bigger subset of Monthly (Yearly, Quarterly, ...) data.
 
 ```{r, message=FALSE, echo=FALSE}
 rm(list=ls())
@@ -38,20 +38,20 @@ In the following document we'll apply the benchmark methods on the M4Comp data. 
 data(M4)
 
 # extract monthly series 
-monthly_M4 <- Filter(function(l) l$period=="Monthly", M4)
+M4monthly <- Filter(function(l) l$period=="Monthly", M4)
 
 # set a random seed
 set.seed(16)
 
 # determine sample size
 sample_n <- 10
-idx <- sample(1:length(monthly_M4), size = 10)
+idx <- sample(1:length(M4monthly), size = 10)
 
 # draw sample from monthly data
-monthly_sample <- monthly_M4[idx]
+M4monthly_sub <- M4monthly[idx]
 
 # clear-memory-except
-rm(list=setdiff(ls(), ls()[grep(pattern=c("monthly_sample"), x=ls())] ) )
+rm(list=setdiff(ls(), ls()[grep(pattern=c("M4monthly_sub"), x=ls())] ) )
 ```
 
 ### Loading functions
@@ -67,62 +67,94 @@ source("my_utils.R")
 
 ```{r}
 # benchmark names 
-Names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Com")
+Names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
 
-#
-data_train = data_test <- monthly_sample
-fh <- monthly_sample[[1]]$h
+# train-test split 
+data_train <- data_test <- M4monthly_sub
+fh <- M4monthly_sub[[1]]$h
+n_fc <- length(Names_benchmarks)
+n_series <- length(data_train)
 
-Total_sMAPE = Total_MASE <- array(NA,dim = c(length(Names_benchmarks), fh, length(data_train)))
+# Container for sMAPE, MASE
+Total_MASE <- array(NA,dim = c(n_fc, fh, n_series))
+Total_sMAPE <- Total_MASE
 ```
 
 ```{r}
+# Example of fourth serise in the subset
 nr <- 4
 insample <- data_train[[nr]]$x
 outsample <- data_test[[nr]]$xx
 fc <- benchmarks(input = insample, fh=fh)
 
-cal_MASE(insample, outsample, fc$Naive)
-cal_MASE(insample, outsample, fc$sNaive)
-cal_MASE(insample, outsample, fc$Naive2)
-cal_MASE(insample, outsample, fc$SES)
-cal_MASE(insample, outsample, fc$Holt)
-cal_MASE(insample, outsample, fc$Damped)
-cal_MASE(insample, outsample, fc$Theta)
-cal_MASE(insample, outsample, fc$Comb)
+# Seasonality
+SeasonalityTest(insample, fh)
 
-autoplot(insample) +
-  autolayer(outsample, series="test") +
+autoplot(window(insample, start=2012)) +
+  autolayer(outsample, series="test") + 
   autolayer(fc$Naive, series="Naive") +
   autolayer(fc$sNaive, series="sNaive") +
-  autolayer(fc$SES, series="Naive2") +
-  autolayer(fc$Holt, series="SES")
+  autolayer(fc$Holt, series="Holt") +
+  ggtitle("Example plot of series #4") +
+  xlab("Year") + ylab("value") +
+  guides(colour=guide_legend(title="Forecast"))
+```
 
-autoplot(insample) +
-  autolayer(outsample, series = "test") +
-  autolayer(fc$Holt, series = "Holt") +
-  autolayer(fc$Damped, series = "Damped") +
-  autolayer(fc$Theta, series = "Theta") +
-  autolayer(fc$Comb, series= "Comb") 
+Note that if `SeasonalityTest` evaluates to `TRUE`, then the following methods (including their forecasts) are adjusted using the seasonal component: 
 
-# more forecasts
-fc1 <- rwf(insample, lambda=BoxCox.lambda(insample), drift=TRUE)$mean
-fc2 <- rwf(insample, lambda=BoxCox.lambda(insample),drift=TRUE, biasadj=TRUE)$mean
-fc3 <- rwf(insample)$mean
-fc4 <- rwf(insample, drift = TRUE)$mean
+- `Naive`
+- `SES` 
+- `Holt`
+- `Damped`: Also known as **Holt method with damped trend**
 
-autoplot(insample) +
-  autolayer(outsample, series="Test") +
-  autolayer(fc1) +
-  autolayer(fc2) +
-  autolayer(fc3) +
-  autolayer(fc4)
+## Results 
 
+```{r}
 for (i in 1:length(data_train)){
   insample <- data_train[[i]]$x
   outsample <- data_test[[i]]$xx
   # forecasts
   fc <- benchmarks(input = insample, fh = fh)
+  
+  # sMAPE
+  for(j in 1:n_fc){
+    Total_sMAPE[j,,i] <- cal_sMAPE(outsample, fc[[j]])
+  }
+  
+  # MASE
+  for (j in 1:n_fc){
+    Total_MASE[j,,i] <- cal_MASE(insample, outsample, fc[[j]])
+  }
+}
+```
+
+### Results sMAPE
+
+```{r}
+# sMAPE
+for (i in 1:n_fc){
+  print(paste(Names_benchmarks[i],"-", round(mean(Total_sMAPE[i,,]),4)))
+}
+```
+
+### Results MASE
+
+```{r}
+# MASE 
+for (i in 1:n_fc){
+  print(paste(Names_benchmarks[i], "-", round(mean(Total_MASE[i,,]), 4)))
+}
+```
+
+### Results OWA
+
+```{r}
+# OWA 
+for(i in 1:n_fc){
+  rel_MASE <- (mean(Total_MASE[i,,]) / mean(Total_MASE[3,,]))
+  rel_sMAPE <- (mean(Total_sMAPE[i,,])/ mean(Total_sMAPE[3,,]))
+  owa <- (rel_MASE + rel_sMAPE)/2
+  print(paste(Names_benchmarks[i], "-",round(owa,4)))
 }
 ```
 

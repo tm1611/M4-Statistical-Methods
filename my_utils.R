@@ -145,7 +145,20 @@ benchmarks <- function(input, fh){
 # to do: 
 # Unit testing
 
-
-
+# benchmarks 2
+benchmarks2 <- function(input, fh){ 
+  des_input <- seas_adj(input, fh)$des_input
+  SIout <- seas_adj(input, fh)$SIout
+  
+  f9 <- rwf(input, drift=TRUE)$mean # rwf
+  f10 <- rwf(input, drift=TRUE, lambda=BoxCox.lambda(input))$mean# rwf, BoxCox
+  f11 <- rwf(input, drift=TRUE, lambda=BoxCox.lambda(input), biasadj = TRUE)$mean # rwf biasadj
+  f12 <- forecast(auto.arima(input), h=fh)$mean
+  f13 <- forecast(ets(input), h=fh)$mean
+  f14 <- (f12+f13) / 2
+  
+  output <- list(RWdrift=f9, RWdrift_BC=f10, RWdrift_BC_a=f11, ARIMA=f12, ETS=f13, ETSARIMA=f14)
+  return(output)
+}
 
 
