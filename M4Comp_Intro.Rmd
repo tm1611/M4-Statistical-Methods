@@ -258,6 +258,8 @@ MASE = \frac{1}{h} \, \frac{ \sum_{t=1}^h |Y_t - \hat{Y}_t| }{ \frac{1}{n-1} \su
 \end{align*}
 $$
 
+
+
 ```{r}
 # Calculate MASE
 
@@ -280,6 +282,31 @@ cal_MASE <- function(insample, outsample, forecasts){
 
 ```
 
+#### Overall weighted average (OWA)
+
+After calculating the accuracy measures (`sMAPE`, `MASE`) we have to divide them by the respective error for the `Naive2` error to get the relative versions of both error measures: 
+
+$$
+\begin{align*}
+rel. \: sMAPE = \frac{sMAPE}{sMAPE_{naive2}}
+\end{align*}
+$$
+and 
+
+$$
+\begin{align*}
+rel. \: MASE = \frac{MASE}{MASE_{naive2}}
+\end{align*}
+$$
+
+In a last step both relative measures are averaged 
+
+$$
+\begin{align*}
+OWA = \frac{1}{2}(rel.MASE + rel.sMAPE)
+\end{align*}
+$$
+
 #### Seasonality Test
 
 The following seasonality test is used to determine whether a time series is seasonal. Based on the results of this test either a naive or seasonal naive method is used for the MASE. 
@@ -301,6 +328,13 @@ SeasonalityTest <- function(input, ppy){
   return(test_seasonal)
 }
 ```
+
+Additionally, if the `SeasonalityTest` evaluates to `TRUE` then the following benchmark methods and respective forecasts are adjusted using the seasonal component: 
+
+- `Naive`
+- `SES`
+- `HOLT`
+- `Damped`
 
 ## Application
 
