@@ -1,9 +1,12 @@
-# MT1-Statistical-Time-Series-Methods
+# MT TM1
 Folder 1 for MT focusing on:
 
 - Theoretical background
 - Statistical methods, i.e. benchmark methods of M4
 
-FPP files covering chapters in the book:
+FPP files covering chapters in the book, covering theoretical and practical aspects of the benchmark methods:
 
 > Hyndman, R. J., & Athanasopoulos, G. (2018) Forecasting: principles and practice, 2nd edition, OTexts: Melbourne, Australia.
+
+# Benchmarks
+Consisting of 8 basic statistical benchmark methods used on M4Comp data.
