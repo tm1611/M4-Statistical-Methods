@@ -411,9 +411,9 @@ autoplot(train) +
 </div>
 <div id="load-and-test-functions" class="section level3">
 <h3>Load and test functions</h3>
-<p>Previously introduced functions have been saved in the R-Script <code>my_utils.R</code> and can be loaded using the function <code>source(&quot;my_utils.R&quot;)</code>.</p>
+<p>Previously introduced functions have been saved in the R-Script <code>my_utils.R</code> and can be loaded using the function <code>source(&quot;my_utils.R&quot;)</code> if they are both in the same functions, otherwise the folder has to be set relative to the RMd document.</p>
 <pre class="r"><code># load utilities
-source(&quot;my_utils.R&quot;)</code></pre>
+source(&quot;../src/my_utils.R&quot;)</code></pre>
 <pre class="r"><code># testing the functions
 fh &lt;- give_fh(train)
 fh</code></pre>

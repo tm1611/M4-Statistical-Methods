@@ -49,11 +49,11 @@ autoplot(train) +
 ```
 
 ### Load and test functions 
-Previously introduced functions have been saved in the R-Script `my_utils.R` and can be loaded using the function `source("my_utils.R")`. 
+Previously introduced functions have been saved in the R-Script `my_utils.R` and can be loaded using the function `source("my_utils.R")` if they are both in the same functions, otherwise the folder has to be set relative to the RMd document. 
 
 ```{r}
 # load utilities
-source("my_utils.R")
+source("../src/my_utils.R")
 ```
 
 ```{r} 

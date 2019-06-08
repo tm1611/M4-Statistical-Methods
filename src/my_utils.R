@@ -6,12 +6,6 @@
 ## Notes ##
 # Avoid dependencies within functions
 
-#############
-# libraries #
-#library(forecast)
-#library(ggplot2)
-#library(M4comp2018)
-
 #########################
 ### utility functions ### 
 
@@ -145,7 +139,7 @@ benchmarks <- function(input, fh){
 # to do: 
 # Unit testing
 
-# benchmarks 2
+# benchmarks v2
 benchmarks2 <- function(input, fh){ 
   des_input <- seas_adj(input, fh)$des_input
   SIout <- seas_adj(input, fh)$SIout

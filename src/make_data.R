@@ -1,5 +1,5 @@
-### M4Comp_data_prep ###
-
+### M4Comp make_data ###
+########################
 # pre
 rm(list=ls())
 graphics.off()
