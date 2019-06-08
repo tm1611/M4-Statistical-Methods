@@ -10,19 +10,19 @@
 ### utility functions ### 
 
 
-## give frequency ##
+## give forecast horizon ##
 give_fh <- function(input){
-  if(frequency(input)==1){
+  if(input$period=="Yearly"){
     fh <- 6
-  } else if(frequency(input)==4){
+  } else if(input$period=="Quarterly"){
     fh <- 8
-  } else if(frequency(input)==12){
+  } else if(input$period=="Monthly"){
     fh <- 18
-  } else if(frequency(input)==52){
+  } else if(input$period=="Weekly"){
     fh <- 13
-  } else if(frequency(input)==365){
+  } else if(input$period=="Daily"){
     fh <- 14
-  } else if(frequency(input)==8760){
+  } else if(input$period=="Hourly"){
     fh <- 48
   }
   return(fh)
@@ -31,7 +31,6 @@ give_fh <- function(input){
 # unit test for all frequencies 
 # How to avoid long else-if structure?
 # -> Use pattern 
-
 
 ## Calculate sMAPE ##
 cal_sMAPE <- function(outsample, forecasts){ 
@@ -68,6 +67,7 @@ cal_MASE <- function(insample, outsample, forecasts){
 # Unit tests
 # check if naive2 is calculated correctly
 # check masep
+# frequency() seems not to work with daily, ... data
 
 
 ## Seasonality Test ##
@@ -89,9 +89,8 @@ SeasonalityTest <- function(input, ppy){
 
 
 ## Seasonal adjustment function ##
-# seasonal adjustment function
 seas_adj <- function(input, fh){
-  # estimate seasonaly adjused series if seasonal
+  # estimate seasonaly adjusted series if seasonal
   ppy <- frequency(input)
   ST <- F
   
@@ -117,6 +116,7 @@ seas_adj <- function(input, fh){
 # to do:
 # can this be further modularized?
 # unit tests
+# Does frequency work on daily data?
 
 
 ## Benchmarks ##
