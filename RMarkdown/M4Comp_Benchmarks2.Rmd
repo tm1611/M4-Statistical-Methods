@@ -60,7 +60,7 @@ The required functions are saved in `my_utils.R` and will now be loaded for usag
 
 ```{r}
 # load functions
-source("my_utils.R")
+source("../src/my_utils.R")
 ```
 
 ### Create a container for the sMAPE and MASE data

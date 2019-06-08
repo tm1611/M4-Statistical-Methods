@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
   out_dir <- 'html_outputs';
   rmarkdown::render(input_file,
   encoding=encoding,
-  output_file=file.path(dirname(input_file), out_dir, 'FPP_Chapter1to3.html'))})
+  output_file=file.path(dirname(input_file), out_dir, 'FPP_Chapter1to3_Basics.html'))})
 ---
 
 ```{r, message=FALSE, echo=FALSE}
@@ -289,7 +289,7 @@ frequency(gold)
 gold[which.max(gold)]
 
 # read in the data
-tute1 <- read.csv("data/tute1.csv", header=TRUE)
+tute1 <- read.csv("../data/tute1.csv", header=TRUE)
 
 # convert to time series 
 my_ts <- ts(tute1[,-1], start=1981, frequency=4)
@@ -297,7 +297,7 @@ my_ts <- ts(tute1[,-1], start=1981, frequency=4)
 autoplot(my_ts, facets=T)
 
 # retail
-retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+retail <- readxl::read_excel("../data/retail.xlsx", skip=1)
 my_ts2 <- ts(retail[,"A3349873A"],
              frequency=12,
              start=c(1982,4))

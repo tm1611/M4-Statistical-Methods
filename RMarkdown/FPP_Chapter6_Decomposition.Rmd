@@ -228,19 +228,24 @@ mstl(taylor) %>%
 
 Define the **strength of trend** as:
 
-$$ F_T = max \Bigg(0, 1- \frac{Var(R_t)}{Var(T_t + R_t)} \Bigg)$$
+$$
+F_T = max \Bigg(0, 1- \frac{Var(R_t)}{Var(T_t + R_t)} \Bigg)
+$$
 
 - Yields measure between 0 and 1.
 
 Define **strength of seasonality** similarly as:
 
-$$ F_S = max \Bigg(0, 1- \frac{Var(R_t)}{Var(S_t + R_t)} \Bigg)$$
+$$
+F_S = max \Bigg(0, 1- \frac{Var(R_t)}{Var(S_t + R_t)} \Bigg)
+$$
 
 A series with seasonal strength $F_S$ close to 0 exhibits almost no seasonality, while a series with strong seasonality will have $F_S$ close to 1. 
 
 - These measures are useful to determine series with strong trend or seasonality. 
 
 ## Forecasting with decomposition
+
 To forecast decomposed time series, components can be foreasted separately. 
 
 - *Seasonal component* is usually assumed to be unchanging (or changing extremely slowly): Forecast using seasonal naive method
@@ -258,8 +263,6 @@ fit %>%
   autoplot() +
   ylab("New orders index") + 
   ggtitle("Naive forecasts of seasonally adjusted data")
-  
-  
 ```
 
 The figure shows naive forecasts of the seasonally adjusted electrical equipment orders data. These are then "reseasonalised" by adding the seasonal naive forecats of the seasonal component. 
@@ -280,7 +283,6 @@ A short-cut approach is to use the `stlf()` function. It will
 fcast <- stlf(elecequip, method="naive")
 autoplot(fcast)
 ```
-
 
 ## Exercises
 
@@ -304,7 +306,6 @@ fit %>%
   autoplot() +
   xlab("Year") +
   ggtitle("Seasonally adjusted data")
-
 ```
 
 #### 3. Data: retail
@@ -312,7 +313,7 @@ fit %>%
 ```{r}
 # X11 of retail time series.
 # Outliers, unusual features?
-retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+retail <- readxl::read_excel("../data/retail.xlsx", skip=1)
 my_ts <- ts(retail[,"A3349335T"],
             frequency=12, 
             start=c(1982, 4))
@@ -348,7 +349,6 @@ cangas %>%
 cangas %>% 
   seas() %>% 
   autoplot() + ggtitle("SEATS decomposition")
-
 ```
 
 #### 6. Data: `bricksq`
@@ -397,7 +397,3 @@ fancy %>%
   stlf(method="rwdrift") %>% 
   autoplot()
 ```
-
-
-
-

@@ -47,7 +47,7 @@ names(M4[[1]])
 The dataset M4 consists of a list of 100,000 time series from different domains and different frequencies: 
 
 ```{r, echo=FALSE, out.width="80%"}
-knitr::include_graphics("images/series_overview.png")
+knitr::include_graphics("../images/series_overview.png")
 ```
 
 Each series within M4 has the following structure: 
@@ -165,7 +165,7 @@ Next, we'll go over some functions that will be used in later stages of this pro
 The objective of the competition was to predict point estimates and 95% prediction intervals (PI). Forecasting horizons were specified based on the frequency: 
 
 ```{r, echo=FALSE, out.width="35%"}
-knitr::include_graphics("images/forecasthorizon.png")
+knitr::include_graphics("../images/forecasthorizon.png")
 ```
 
 The forecast horizon can be determined using the  `give_fh` function: 
@@ -388,11 +388,10 @@ cal_MASE(insample = train, outsample = test, forecasts = f2)
 
 The main measure evaluated is the overall weighted average (OWA) of the aforementioned two accuracy measures (sMAPE, MASE). To get the OWA: 
 
-- Divide errors (sMAPE, MASE) by the error of the naive forecast based on deseasonalized data (naive2). This yields **relative MASE** and **relative sMAPE**
-- Different to seasonal naive forecast!
+- Divide errors (sMAPE, MASE) by the error of the naive forecast `(naive2)` based on deseasonalized data. This gives us the **relative MASE** and **relative sMAPE**
 - Compute OWA by averaging the relative MASE and relative sMAPE
 
-Accordingly, we first need to decompose the series which we'll do in the next section before returning in order to calculate the OWA. 
+Accordingly, we first need to decompose the series which we'll do in the next section before we calculate the OWA. 
 
 ## Time Series Decomposition
 
@@ -457,9 +456,9 @@ autoplot(dec) +
 The following function will be used to deseasonalize our data. It is the basis for some benchmarking methods that will be introduced in the next part. 
 
 ```{r}
-seas_adj <- function(input){
-  # estimate seasonaly adjused series if seasonal
-  fh <- give_fh(input)
+seas_adj <- function(input, fh=give_fh(input)){
+  # estimate seasonaly adjusted series
+  # estimate future seasonal components
   ppy <- frequency(input)
   ST <- F
 

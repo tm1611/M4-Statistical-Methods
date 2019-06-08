@@ -6,7 +6,7 @@ knit: (function(input_file, encoding) {
   out_dir <- 'html_outputs';
   rmarkdown::render(input_file,
   encoding=encoding,
-  output_file=file.path(dirname(input_file), out_dir, 'FPP_Chapter7_ES.html'))})
+  output_file=file.path(dirname(input_file), out_dir, 'FPP_Chapter7_ExpSmoothing.html'))})
 ---
 
 ```{r, message=FALSE, echo=FALSE}
@@ -332,17 +332,17 @@ autoplot(hyndsight) +
 
 Variations in the components of the trend and seasonal components yield nine exponential smoothing methods. 
 
-![](images/Classification_ES.png)
+![](../images/Classification_ES.png)
 
 Some of these have already been introduced before:
 
-![](images/Shorthand.png){width=66%}
+![](../images/Shorthand.png){width=66%}
 
 Multiplicative trend methods are not considered here as they tend to produce bad forecasts. 
 
 Overview of all the equations related to the nine exponential smoothing methods: 
 
-![](images/pegelstable.png)
+![](../images/pegelstable.png)
 
 - $l_t$ denotes series level
 - $b_t$ denotes slope at time t
@@ -482,7 +482,7 @@ where again $\beta = \alpha \beta$ and $\varepsilon \sim NID(0,\sigma^2)$
 
 All statee equations for each of the models in the ETS framework. 
 
-![](images/statespacemodels.png)
+![](../images/statespacemodels.png)
 
 ## Estimation and model selection
 
@@ -610,7 +610,7 @@ $$
 
 where c depends on the coverage probability, and $\sigma_h^2$ is the forecast variance. The following table give the formulas for the additive ETS models (which are the simplest). 
 
-![](images/forecastvariances.png)
+![](../images/forecastvariances.png)
 
 #### Using `forecast()`
 
@@ -726,7 +726,7 @@ autoplot(fit_h3)
 #### Exercise 8
 
 ```{r}
-retail <- readxl::read_excel("data/retail.xlsx", skip=1)
+retail <- readxl::read_excel("../data/retail.xlsx", skip=1)
 
 my_retail <- ts(retail[,"A3349335T"], 
                 frequency=12,

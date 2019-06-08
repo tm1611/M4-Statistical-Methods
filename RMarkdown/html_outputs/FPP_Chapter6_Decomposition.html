@@ -570,12 +570,16 @@ mstl(taylor) %&gt;%
 <li>Data with little or no trend: Both variances should approximately be the same.</li>
 </ul>
 <p>Define the <strong>strength of trend</strong> as:</p>
-<p><span class="math display">\[ F_T = max \Bigg(0, 1- \frac{Var(R_t)}{Var(T_t + R_t)} \Bigg)\]</span></p>
+<p><span class="math display">\[
+F_T = max \Bigg(0, 1- \frac{Var(R_t)}{Var(T_t + R_t)} \Bigg)
+\]</span></p>
 <ul>
 <li>Yields measure between 0 and 1.</li>
 </ul>
 <p>Define <strong>strength of seasonality</strong> similarly as:</p>
-<p><span class="math display">\[ F_S = max \Bigg(0, 1- \frac{Var(R_t)}{Var(S_t + R_t)} \Bigg)\]</span></p>
+<p><span class="math display">\[
+F_S = max \Bigg(0, 1- \frac{Var(R_t)}{Var(S_t + R_t)} \Bigg)
+\]</span></p>
 <p>A series with seasonal strength <span class="math inline">\(F_S\)</span> close to 0 exhibits almost no seasonality, while a series with strong seasonality will have <span class="math inline">\(F_S\)</span> close to 1.</p>
 <ul>
 <li>These measures are useful to determine series with strong trend or seasonality.</li>
@@ -642,7 +646,7 @@ fit %&gt;%
 <h4>3. Data: retail</h4>
 <pre class="r"><code># X11 of retail time series.
 # Outliers, unusual features?
-retail &lt;- readxl::read_excel(&quot;data/retail.xlsx&quot;, skip=1)
+retail &lt;- readxl::read_excel(&quot;../data/retail.xlsx&quot;, skip=1)
 my_ts &lt;- ts(retail[,&quot;A3349335T&quot;],
             frequency=12, 
             start=c(1982, 4))
