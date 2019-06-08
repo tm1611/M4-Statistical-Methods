@@ -1,6 +1,5 @@
-##################
-### Benchmarks ###
-# This script is used to obtain benchmark results 
+### Benchmarks Qaurterly ###
+# V1
 
 # pre
 rm(list=ls())
@@ -11,33 +10,17 @@ library(forecast)
 library(ggplot2)
 
 # load data
-M4_Monthly <- readRDS(file= "data/M4_Monthly.rds")
+M4_Quarterly <- readRDS(file= "data/M4_Quarterly.rds")
 
-# set a random seed
-#set.seed(16)
-
-# take a subset
-n_sub <- 4800
-idx <- sample(1:length(M4_Monthly), size=n_sub, replace=FALSE)
-M4_Monthly_sub <- M4_Monthly[idx]
-
-# Monthly_Total 
-M4_Monthly_sub <- M4_Monthly
-
-length(M4_Monthly_sub)
-
-# clear-memory-except
-rm(list=setdiff(ls(), ls()[grep(pattern=c("M4_Monthly_sub"), x=ls())] ) )
-
-# load my_utils functions
+# load my_utils
 source("my_utils.R")
 
 ### initialize ###
 names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
-data_train <- data_test <- M4_Monthly_sub
+data_train <- data_test <- M4_Quarterly
 n_fc <- length(names_benchmarks)
 n_series <- length(data_train)
-fh <- M4_Monthly_sub[[1]]$h
+fh <- M4_Quarterly[[1]]$h
 
 Total_MASE <- array(NA,dim = c(n_fc, fh, n_series))
 Total_sMAPE <- Total_MASE
@@ -80,7 +63,3 @@ for(i in 1:n_fc){
   owa <- (rel_MASE + rel_sMAPE)/2
   print(paste(names_benchmarks[i], "-",round(owa,4)))
 }
-
-
-
-
