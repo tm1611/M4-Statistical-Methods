@@ -1,5 +1,5 @@
 ---
-title: "M4Comp: "
+title: "M4Comp: Introduction"
 author: "Timo Meiendresch"
 date: "04/06/2019"
 knit: (function(input_file, encoding) {
@@ -14,9 +14,9 @@ rm(list=ls())
 graphics.off()
 ```
 
-# M4 Competition Toolkit
+# M4 Competition Introduction 
 
-The following document is a collection of functions to work with the M4 Competition data. In particular the package `M4comp2018` comprising all 100,000 time series will be used.
+The following document introduces some necessary function for the analysis of the M4 Competition data. After introducing them we'll later simply reload them using `source("src/my_utils.R")` where the functions are stored in one script. In addition, we'll use the package `M4comp2018`.
 
 In a first step we will go over basic functionalities, i.e. how to extract monthly train and test data. Next, the accuracy measures of the competition will be introduced and some other useful functions (like a seasonality test) will be shown. Afterwards, some benchmarks will be calculated and accuracy measured on individual time series. 
 
@@ -403,7 +403,7 @@ When time series are decomposed into components, usually the individual componen
 - **seasonal component**
 - **remainder component** (everything else)
 
-- Assuming an **additive decomposition:**
+Assuming an **additive decomposition:**
 
 $$
 y_{t} = S_{t} + T_{t} + R_t,
