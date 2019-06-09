@@ -16,13 +16,6 @@ library(ggplot2)
 
 source("src/my_utils_v2.R")
 
-# sample fun
-give_sam <- function(input, size=1, seed=16){
-  set.seed(16)
-  idx <- sample(1:length(input), size=size)
-  input[[idx]]
-}
-
 ############################
 ### unit test: give_fh() ###
 

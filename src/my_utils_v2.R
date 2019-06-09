@@ -1,6 +1,12 @@
 ### my_utils ###
 ### v2, after unit-testing ###
 
+give_sam <- function(input, size=1, seed=16){
+  set.seed(16)
+  idx <- sample(1:length(input), size=size)
+  input[[idx]]
+}
+
 ## give forecast horizon ##
 give_fh <- function(input){
   if(input$period=="Yearly"){

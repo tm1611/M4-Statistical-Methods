@@ -9,6 +9,12 @@
 #########################
 ### utility functions ### 
 
+# give sample from M4
+give_sam <- function(input, size=1, seed=16){
+  set.seed(seed)
+  idx <- sample(1:length(input), size=size)
+  input[[idx]]
+}
 
 ## give forecast horizon ##
 give_fh <- function(input){
@@ -119,7 +125,7 @@ seas_adj <- function(input, fh){
 # Does frequency work on daily data?
 
 
-## Benchmarks ##
+## Benchmarks M4Comp
 benchmarks <- function(input, fh){ 
   des_input <- seas_adj(input, fh)$des_input
   SIout <- seas_adj(input, fh)$SIout
@@ -147,11 +153,29 @@ benchmarks2 <- function(input, fh){
   f9 <- rwf(input, drift=TRUE)$mean # rwf
   f10 <- rwf(input, drift=TRUE, lambda=BoxCox.lambda(input))$mean# rwf, BoxCox
   f11 <- rwf(input, drift=TRUE, lambda=BoxCox.lambda(input), biasadj = TRUE)$mean # rwf biasadj
-  f12 <- forecast(auto.arima(input), h=fh)$mean
-  f13 <- forecast(ets(input), h=fh)$mean
-  f14 <- (f12+f13) / 2
+  f12 <- forecast(auto.arima(input), h=fh)$mean # ARIMA
+  f13 <- forecast(ets(input), h=fh)$mean # ETS 
+  f14 <- (f12+f13) / 2 # ETSARIMA
   
   output <- list(RWdrift=f9, RWdrift_BC=f10, RWdrift_BC_a=f11, ARIMA=f12, ETS=f13, ETSARIMA=f14)
+  return(output)
+}
+
+# benchmarks v3
+my_benchmarks <- function(input, fh){
+  des_input <- seas_adj(input, fh)$des_input
+  SIout <- seas_adj(input, fh)$SIout
+  
+  f4 <- ses(des_input, h=fh)$mean*SIout # ses
+  f5 <- holt(des_input, h=fh, damped=FALSE)$mean*SIout # holt
+  f6 <- holt(des_input, h=fh, damped=TRUE)$mean*SIout # damped holt
+  f8 <- (f4+f5+f6)/3 # comb
+
+  f12 <- forecast(auto.arima(input), h=fh)$mean # ARIMA
+  f13 <- forecast(ets(input), h=fh)$mean # ETS 
+  f14 <- (f12+f13) / 2 # ETSARIMA
+  
+  output <- list(Comb=f8, ARIMA=f12, ETS=f13, ETSARIMA=f14)
   return(output)
 }
 
