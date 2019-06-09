@@ -12,8 +12,8 @@
 # give sample from M4
 give_sam <- function(input, size=1, seed=16){
   set.seed(seed)
-  idx <- sample(1:length(input), size=size)
-  input[[idx]]
+  idx <- sample(1:length(input), size=size, replace=FALSE)
+  input[idx]
 }
 
 ## give forecast horizon ##
@@ -165,6 +165,7 @@ benchmarks2 <- function(input, fh){
 my_benchmarks <- function(input, fh){
   des_input <- seas_adj(input, fh)$des_input
   SIout <- seas_adj(input, fh)$SIout
+  f3 <- naive(des_input, h=fh)$mean*SIout # naive2
   
   f4 <- ses(des_input, h=fh)$mean*SIout # ses
   f5 <- holt(des_input, h=fh, damped=FALSE)$mean*SIout # holt
@@ -175,7 +176,7 @@ my_benchmarks <- function(input, fh){
   f13 <- forecast(ets(input), h=fh)$mean # ETS 
   f14 <- (f12+f13) / 2 # ETSARIMA
   
-  output <- list(Comb=f8, ARIMA=f12, ETS=f13, ETSARIMA=f14)
+  output <- list(Naive2=f3, Comb=f8, ARIMA=f12, ETS=f13, ETSARIMA=f14)
   return(output)
 }
 

@@ -1,28 +1,30 @@
-### my_benchmarks 
-# pre
+### Alternative way to get benchmarks ###
+### Benchmarks_Weekly_alt
+
 rm(list=ls())
 graphics.off()
 library(forecast)
 library(ggplot2)
 source("src/my_utils.R")
 
-df <- give_sam(readRDS("data/M4_Quarterly.rds"), size = 10,seed = 253)
-#df <- readRDS("data/M4_Quarterly.rds")
+# load data
+df <- readRDS(file= "data/M4_Weekly.rds")
 
-# intialize values
+# initialize values 
 fh <- NA
 insample <- NA
 outsample <- NA
-fc_names <- c("Naive2", "Comb", "ARIMA", "ETS", "ETSARIMA")
+fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(fc_names))
 colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
 
+# Forecasts
 for (i in 1:length(df)){
   insample <- df[[i]]$x
   outsample <- df[[i]]$xx
   fh <- df[[i]]$h
-
-  fc <- my_benchmarks(input=insample, fh=fh)
+  
+  fc <- benchmarks(input=insample, fh=fh)
   Total_sMAPE[i,] <- unlist(lapply(fc, cal_sMAPE, outsample=outsample))
   Total_MASE[i,] <- unlist(lapply(fc, cal_MASE, insample=insample, outsample=outsample))
 }
@@ -36,4 +38,8 @@ rel_MASE <- Total_MASE / Total_MASE[,1]
 
 OWA <- (rel_sMAPE + rel_MASE) / 2
 colMeans(OWA)
+
+
+
+
 
