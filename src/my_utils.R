@@ -180,4 +180,21 @@ my_benchmarks <- function(input, fh){
   return(output)
 }
 
+# try a wrapper function
+wrapper_fun <- function(input, fun){
+  # inputs: 
+  # input <- M4Comp time series 
+  # fun <- forecast function
+  # output: sMAPE, MASE for forecast functions
+  insample <- input$x
+  outsample <- input$xx
+  fh <- input$h
+  
+  fc <- fun(input=insample, fh=fh)
+  sMAPE <- unlist(lapply(fc, cal_sMAPE, outsample=outsample))
+  MASE <- unlist(lapply(fc, cal_MASE, insample=insample, outsample=outsample))
+  output <- list(sMAPE=sMAPE, MASE=MASE)
+  return(output)
+}
+
 

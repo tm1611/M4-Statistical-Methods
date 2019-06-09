@@ -13,7 +13,7 @@ library(ggplot2)
 M4_Weekly <- readRDS(file= "data/M4_Weekly.rds")
 
 # load my_utils
-source("my_utils.R")
+source("src/my_utils.R")
 
 ### initialize ###
 names_benchmarks <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")

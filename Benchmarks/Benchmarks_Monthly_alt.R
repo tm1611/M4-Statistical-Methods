@@ -1,4 +1,4 @@
-### Benchmarks_Weekly_alt
+### Benchmarks_Monthly_alt
 rm(list=ls())
 graphics.off()
 library(forecast)
@@ -6,8 +6,8 @@ library(ggplot2)
 source("src/my_utils.R")
 
 # load data
-df <- give_sam(readRDS(file= "data/M4_Weekly.rds"),size = 10, seed = 16)
-df <- readRDS(file= "data/M4_Weekly.rds")
+df <- give_sam(readRDS(file= "data/M4_Monthly.rds"),size = 10, seed = 16)
+#df <- readRDS(file= "data/M4_Monthly.rds")
 
 # initialize values 
 fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
@@ -22,7 +22,7 @@ for (i in 1:length(df)){
 }
 
 ## Calculate means of sMAPE and MASE
-sMAPE_mean <- round( (colMeans(Total_sMAPE)*100),4 )
+sMAPE_mean <-round( (colMeans(Total_sMAPE)*100),4 )
 MASE_mean <- round( colMeans(Total_MASE),4 )
 
 # Calculate mean OWA
@@ -33,5 +33,4 @@ OWA_mean <- round( colMeans(OWA),4 )
 
 # results
 data.frame(sMAPE_mean, MASE_mean, OWA_mean)
-
 

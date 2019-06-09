@@ -1,4 +1,4 @@
-### Benchmarks_Weekly_alt
+### Benchmarks_Daily_alt
 rm(list=ls())
 graphics.off()
 library(forecast)
@@ -6,8 +6,8 @@ library(ggplot2)
 source("src/my_utils.R")
 
 # load data
-df <- give_sam(readRDS(file= "data/M4_Weekly.rds"),size = 10, seed = 16)
-df <- readRDS(file= "data/M4_Weekly.rds")
+df <- give_sam(readRDS(file= "data/M4_Daily.rds"),size = 100, seed = 16)
+#df <- readRDS(file= "data/M4_Daily.rds")
 
 # initialize values 
 fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
@@ -31,7 +31,11 @@ rel_MASE <- Total_MASE / Total_MASE[,"Naive2"]
 OWA <- (rel_sMAPE + rel_MASE) / 2
 OWA_mean <- round( colMeans(OWA),4 )
 
-# results
-data.frame(sMAPE_mean, MASE_mean, OWA_mean)
+# Calculate mean OWA according M4
+rel_sMAPE_M4 <- colMeans(Total_sMAPE) / colMeans(Total_sMAPE)["Naive2"]
+rel_MASE_M4 <- colMeans(Total_MASE) / colMeans(Total_MASE)["Naive2"]
+OWA_M4 <- round( ((rel_sMAPE_M4 + rel_MASE_M4) / 2), 4)
 
+# results
+data.frame(sMAPE_mean, MASE_mean, OWA_mean, OWA_M4)
 
