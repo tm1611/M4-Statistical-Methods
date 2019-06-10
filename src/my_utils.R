@@ -180,21 +180,35 @@ my_benchmarks <- function(input, fh){
   return(output)
 }
 
-# try a wrapper function
+# wrapper function
 wrapper_fun <- function(input, fun){
-  # inputs: 
-  # input <- M4Comp time series 
-  # fun <- forecast function
-  # output: sMAPE, MASE for forecast functions
   insample <- input$x
   outsample <- input$xx
   fh <- input$h
   
   fc <- fun(input=insample, fh=fh)
-  sMAPE <- unlist(lapply(fc, cal_sMAPE, outsample=outsample))
-  MASE <- unlist(lapply(fc, cal_MASE, insample=insample, outsample=outsample))
+  sMAPE <- sapply(fc, cal_sMAPE, outsample=outsample)
+  MASE <- sapply(fc, cal_MASE, insample=insample, outsample=outsample)
   output <- list(sMAPE=sMAPE, MASE=MASE)
   return(output)
 }
 
+# my accuracy
+my_accuracy <- function(Total_sMAPE, Total_MASE){
+  sMAPE_mean <- round( (colMeans(Total_sMAPE)*100),4 )
+  MASE_mean <- round( colMeans(Total_MASE),4 )
+  
+  # Calculate mean OWA
+  rel_sMAPE <- Total_sMAPE / Total_sMAPE[,"Naive2"]
+  rel_MASE <- Total_MASE / Total_MASE[,"Naive2"]
+  OWA <- (rel_sMAPE + rel_MASE) / 2
+  OWA_mean <- round( colMeans(OWA),4 )
+  
+  # Calculate mean OWA according M4
+  rel_sMAPE_M4 <- colMeans(Total_sMAPE) / colMeans(Total_sMAPE)["Naive2"]
+  rel_MASE_M4 <- colMeans(Total_MASE) / colMeans(Total_MASE)["Naive2"]
+  OWA_M4 <- round( ((rel_sMAPE_M4 + rel_MASE_M4) / 2), 4)
+  # results
+  data.frame(sMAPE_mean, MASE_mean, OWA_mean, OWA_M4)
+}
 

@@ -6,8 +6,21 @@ library(ggplot2)
 source("src/my_utils.R")
 
 # load data
-df <- give_sam(readRDS(file= "data/M4_Hourly.rds"),size = 10, seed = 16)
-df <- readRDS(file= "data/M4_Hourly.rds")
+my_data <- "data/M4_Hourly.rds"
+df <- give_sam(readRDS(file=my_data),size = 20, seed = 16)
+df <- readRDS(file=my_data)
+length(df)
+
+# plot a random series 
+df_sam <- give_sam(df, size=1)[[1]]
+fc_sam <- benchmarks(df_sam$x, fh=df_sam$h)
+
+autoplot(df_sam$x) +
+  autolayer(df_sam$xx, series="test") +
+  autolayer(fc_sam$Naive, series="Naive") +
+  autolayer(fc_sam$Naive2, series="Naive2") +
+  autolayer(fc_sam$Theta, series="Theta") +
+  autolayer(fc_sam$Comb, series="Comb") 
 
 # initialize values 
 fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
@@ -16,21 +29,21 @@ colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
 
 # forecasts
 for (i in 1:length(df)){
+  n <- length(df)
+  if(i%%10==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
   output <- wrapper_fun(df[[i]], benchmarks)
   Total_sMAPE[i,] <- output$sMAPE
   Total_MASE[i,] <- output$MASE
 }
 
-## Calculate means of sMAPE and MASE
-sMAPE_mean <- round( (colMeans(Total_sMAPE)*100),4 )
-MASE_mean <- round( colMeans(Total_MASE),4 )
+## Calculate accuracy measures
+my_accuracy(Total_sMAPE, Total_MASE)
 
-# Calculate mean OWA
-rel_sMAPE <- Total_sMAPE / Total_sMAPE[,"Naive2"]
-rel_MASE <- Total_MASE / Total_MASE[,"Naive2"]
-OWA <- (rel_sMAPE + rel_MASE) / 2
-OWA_mean <- round( colMeans(OWA),4 )
-
-# results
-data.frame(sMAPE_mean, MASE_mean, OWA_mean)
 
