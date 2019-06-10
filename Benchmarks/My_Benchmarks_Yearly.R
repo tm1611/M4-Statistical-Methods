@@ -1,4 +1,4 @@
-### My_Benchmarks_Quarterly 
+### My_Benchmarks_Yearly
 rm(list=ls())
 graphics.off()
 library(forecast)
@@ -6,8 +6,8 @@ library(ggplot2)
 source("src/my_utils.R")
 
 # load data
-my_data <- "data/M4_Quarterly.rds"
-df <- give_sam(readRDS(file=my_data),size = 2400, seed = 11) # 10%
+my_data <- "data/M4_Yearly.rds"
+df <- give_sam(readRDS(file=my_data),size = 20, seed = 11)
 df <- readRDS(file=my_data)
 length(df)
 
@@ -16,7 +16,7 @@ df_sam <- give_sam(df, size=1)[[1]]
 fc_sam <- my_benchmarks(df_sam$x, fh=df_sam$h)
 
 autoplot(df_sam$x) +
-  autolayer(df_sam$xx, series="outsample") +
+  autolayer(df_sam$xx, series="test") +
   autolayer(fc_sam$Naive2, series="Naive2") +
   autolayer(fc_sam$Comb, series="Comb") +
   autolayer(fc_sam$ARIMA, series="Auto.ARIMA") + 
@@ -27,7 +27,6 @@ autoplot(df_sam$x) +
 fc_names <- c("Naive2", "Comb", "ARIMA", "ETS", "ETSARIMA")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(fc_names))
 colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
-dim(Total_MASE)
 
 # forecasts
 for (i in 1:length(df)){
@@ -46,9 +45,4 @@ for (i in 1:length(df)){
 }
 
 ## Calculate accuracy measures
-print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
-
-colMeans(Total_MASE, na.rm = TRUE)
-colMeans(Total_sMAPE, na.rm=TRUE)
-

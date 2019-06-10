@@ -1,4 +1,4 @@
-### My_Benchmarks_Quarterly 
+### My_Benchmarks_Hourly
 rm(list=ls())
 graphics.off()
 library(forecast)
@@ -6,8 +6,8 @@ library(ggplot2)
 source("src/my_utils.R")
 
 # load data
-my_data <- "data/M4_Quarterly.rds"
-df <- give_sam(readRDS(file=my_data),size = 2400, seed = 11) # 10%
+my_data <- "data/M4_Hourly.rds"
+df <- give_sam(readRDS(file=my_data),size = 42, seed = 11) # ~10%
 df <- readRDS(file=my_data)
 length(df)
 
@@ -32,7 +32,7 @@ dim(Total_MASE)
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
-  if(i%%10==0){
+  if(i%%2==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
   } 
@@ -49,6 +49,6 @@ for (i in 1:length(df)){
 print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
 
-colMeans(Total_MASE, na.rm = TRUE)
-colMeans(Total_sMAPE, na.rm=TRUE)
+
+
 

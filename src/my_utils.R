@@ -195,18 +195,18 @@ wrapper_fun <- function(input, fun){
 
 # my accuracy
 my_accuracy <- function(Total_sMAPE, Total_MASE){
-  sMAPE_mean <- round( (colMeans(Total_sMAPE)*100),4 )
-  MASE_mean <- round( colMeans(Total_MASE),4 )
+  sMAPE_mean <- round( (colMeans(Total_sMAPE, na.rm = T)*100),4 )
+  MASE_mean <- round( colMeans(Total_MASE, na.rm=T),4 )
   
   # Calculate mean OWA
   rel_sMAPE <- Total_sMAPE / Total_sMAPE[,"Naive2"]
   rel_MASE <- Total_MASE / Total_MASE[,"Naive2"]
   OWA <- (rel_sMAPE + rel_MASE) / 2
-  OWA_mean <- round( colMeans(OWA),4 )
+  OWA_mean <- round( colMeans(OWA, na.rm=T),4 )
   
   # Calculate mean OWA according M4
-  rel_sMAPE_M4 <- colMeans(Total_sMAPE) / colMeans(Total_sMAPE)["Naive2"]
-  rel_MASE_M4 <- colMeans(Total_MASE) / colMeans(Total_MASE)["Naive2"]
+  rel_sMAPE_M4 <- colMeans(Total_sMAPE, na.rm=T) / colMeans(Total_sMAPE, na.rm = T)["Naive2"]
+  rel_MASE_M4 <- colMeans(Total_MASE, na.rm=T) / colMeans(Total_MASE, na.rm=T)["Naive2"]
   OWA_M4 <- round( ((rel_sMAPE_M4 + rel_MASE_M4) / 2), 4)
   # results
   data.frame(sMAPE_mean, MASE_mean, OWA_mean, OWA_M4)
