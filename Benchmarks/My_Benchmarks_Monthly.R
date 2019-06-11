@@ -48,6 +48,17 @@ for (i in 1:length(df)){
 print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
 
+########################
+### Save the results ###
+sn <- rep(NA, length(df))
 
+for (i in 1:length(df)){
+  sn[i] <- df[[i]]$st
+}
 
+res_monthly <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(res_monthly, file="results/benchmarks/results_monthly_10pc.csv")
+
+res_table_monthly_10pc <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(res_table_monthly_10pc, file="results/benchmarks/results_table_monthly_10pc.csv")
 
