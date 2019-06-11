@@ -32,7 +32,7 @@ dim(Total_MASE)
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
-  if(i%%2==0){
+  if(i%%5==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
   } 
