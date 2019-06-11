@@ -8,7 +8,7 @@ source("src/my_utils.R")
 # load data
 my_data <- "data/M4_Quarterly.rds"
 df <- give_sam(readRDS(file=my_data),size = 2400, seed = 11) # 10%
-df <- readRDS(file=my_data)
+#df <- readRDS(file=my_data)
 length(df)
 
 # plot a random series 
@@ -32,7 +32,7 @@ dim(Total_MASE)
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
-  if(i%%10==0){
+  if(i%%5==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
   } 
@@ -49,6 +49,16 @@ for (i in 1:length(df)){
 print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
 
-colMeans(Total_MASE, na.rm = TRUE)
-colMeans(Total_sMAPE, na.rm=TRUE)
+####################
+### Save results ###
+sn <- rep(NA, length(df))
 
+for (i in 1:length(df)){
+  sn[i] <- df[[i]]$st
+}
+
+res_quarterly <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(res_quarterly, file="results/benchmarks/results_quarterly_10pc.csv")
+
+res_table_quarterly_10pc <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(res_table_quarterly_10pc, file="results/benchmarks/results_table_quarterly_10pc.csv")
