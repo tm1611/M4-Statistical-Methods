@@ -30,14 +30,36 @@ colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
-  if(i%%10 ==0){
-    print(paste(i, "(",(i/n)*100,"%)" ))
-  }
+   
   output <- wrapper_fun(df[[i]], benchmarks)
   Total_sMAPE[i,] <- output$sMAPE
   Total_MASE[i,] <- output$MASE
+  
+  if(i%%10==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
 }
 
 ## Calculate accuracy measures
+print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
+
+####################
+### Save results ###
+sn <- rep(NA, length(df))
+
+for (i in 1:length(df)){
+  sn[i] <- df[[i]]$st
+}
+
+res_bm8_daily <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(res_bm8_daily, file="results/benchmarks/results_bm8_daily.csv")
+
+res_table_bm8_daily <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(res_table_bm8_daily, file="results/benchmarks/results_bm8_daily_table.csv")
+
 

@@ -26,10 +26,16 @@ autoplot(df_sam$x) +
 fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(fc_names))
 colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_sMAPE)
 
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
+
+  output <- wrapper_fun(df[[i]], benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+  
   if(i%%10 ==0){
     pct <- round((i/n)*100,4)
     print(noquote(paste0(i, "/",n, " - " ,pct, "%")))
@@ -38,11 +44,22 @@ for (i in 1:length(df)){
     print("Done!")
   }
   
-  output <- wrapper_fun(df[[i]], benchmarks)
-  Total_sMAPE[i,] <- output$sMAPE
-  Total_MASE[i,] <- output$MASE
 }
 
 ## Calculate accuracy measures
+print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
 
+####################
+### Save results ###
+sn <- rep(NA, length(df))
+
+for (i in 1:length(df)){
+  sn[i] <- df[[i]]$st
+}
+
+res_bm8_monthly <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(res_bm8_monthly, file="results/benchmarks/results_bm8_monthly.csv")
+
+res_table_bm8_monthly <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(res_table_bm8_monthly, file="results/benchmarks/results_bm8_monthly_table.csv")
