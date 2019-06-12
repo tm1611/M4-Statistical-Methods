@@ -7,7 +7,7 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Hourly.rds"
-df <- give_sam(readRDS(file=my_data),size = 42, seed = 11) # ~10%
+df <- give_sam(readRDS(file=my_data),size = 42, seed = 16) # ~10%
 #df <- readRDS(file=my_data)
 length(df)
 
@@ -31,18 +31,18 @@ dim(Total_MASE)
 
 # forecasts
 for (i in 1:length(df)){
+  output <- wrapper_fun(df[[i]], my_benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+  
   n <- length(df)
-  if(i%%2==0){
+  if(i%%1==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
   } 
   if(i%%n==0){
     print("Done!")
   }
-  
-  output <- wrapper_fun(df[[i]], my_benchmarks)
-  Total_sMAPE[i,] <- output$sMAPE
-  Total_MASE[i,] <- output$MASE
 }
 
 ## Calculate accuracy measures
@@ -61,22 +61,3 @@ write.csv(res_hourly, file="results/benchmarks/results_hourly_10pc.csv")
 
 res_table_hourly_10pc <- my_accuracy(Total_sMAPE, Total_MASE)
 write.csv(res_table_hourly_10pc, file="results/benchmarks/results_table_hourly_10pc.csv")
-
-### some testing...
-my_df <- df[[8]]
-
-my_df_arima <- auto.arima(my_df$x)
-fc_arima <- forecast(my_df_arima, h=48)$mean
-
-my_df_ets <- ets(my_df$x)
-fc_ets <- forecast(my_df_ets, h=48)$mean
-
-
-fc_etsarima <- (fc_arima + fc_ets) / 2
-
-autoplot(my_df$x) +
-  autolayer(my_df$xx, series="test") +
-  autolayer(fc_arima) +
-  autolayer(fc_ets) +
-  autolayer(fc_etsarima)
-
