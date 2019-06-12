@@ -27,10 +27,16 @@ autoplot(df_sam$x) +
 fc_names <- c("Naive2", "Comb", "ARIMA", "ETS", "ETSARIMA")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(fc_names))
 colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_sMAPE)
 
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
+
+  output <- wrapper_fun(df[[i]], my_benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+  
   if(i%%10==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
@@ -38,16 +44,24 @@ for (i in 1:length(df)){
   if(i%%n==0){
     print("Done!")
   }
-  
-  output <- wrapper_fun(df[[i]], my_benchmarks)
-  Total_sMAPE[i,] <- output$sMAPE
-  Total_MASE[i,] <- output$MASE
 }
 
 ## Calculate accuracy measures
 print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
 
+####################
+### Save results ###
+sn <- rep(NA, length(df))
+for (i in 1:length(df)){
+  sn[i] <- df[[i]]$st
+}
+
+res_daily <- data.frame(Series=sn, Total_sMAPE, Total_MASE)
+write.csv(res_daily, file="results/benchmarks/results_daily.csv")
+
+res_daily_table  <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(res_daily_table, file="results/benchmarks/results_daily_table.csv")
 
 
 

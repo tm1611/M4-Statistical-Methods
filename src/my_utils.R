@@ -139,7 +139,7 @@ benchmarks <- function(input, fh){
   f7 <- thetaf(input, h=fh)$mean
   f8 <- (f4+f5+f6)/3 # comb
   
-  output <- list(Naive=f1, sNaive=f2, Naive2=f3, SES=f4, Holt=f5, Damped=f6, Theta=f7, Comb=f8)
+  output <- list(Naive=f1, sNaive=f2, Naive2=f3, SES=f4, Holt=f5, Damped=f6, HW=f6b, Theta=f7, Comb=f8)
   return(output)
 }
 # to do: 

@@ -51,7 +51,6 @@ my_accuracy(Total_sMAPE, Total_MASE)
 
 ### Save results 
 sn <- rep(NA, length(df))
-
 for (i in 1:length(df)){
   sn[i] <- df[[i]]$st
 }
