@@ -36,6 +36,7 @@ library(M4comp2018)
 ```
 
 In a first step we'll load the data into the R environment. Note that this data set is really big. 
+
 ```{r}
 # load data
 data(M4)
@@ -409,10 +410,10 @@ $$
 y_{t} = S_{t} + T_{t} + R_t,
 $$
 
-- Assuming a **multiplicative decomposition:** 
+Assuming a **multiplicative decomposition:** 
 
 $$
-y_{t} = S_{t} + T_{t} + R_t,
+y_{t} = S_{t} \times T_{t} \times R_t,
 $$
 
 - $S_t$ is the seasonal component,
