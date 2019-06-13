@@ -7,20 +7,27 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Monthly.rds"
-df <- give_sam(readRDS(file=my_data),size = 20, seed = 16)
+df <- give_sam(readRDS(file=my_data),size = 20, seed = 11)
 df <- readRDS(file=my_data)
 length(df)
 
 # plot a random series 
-df_sam <- give_sam(df, size=1)[[1]]
+df_sam <- give_sam(df, size=1, seed = 16)[[1]]
 fc_sam <- benchmarks(df_sam$x, fh=df_sam$h)
 
+# historical data -> Can you guess where this is going?
 autoplot(df_sam$x) +
-  autolayer(df_sam$xx, series="test") +
-  autolayer(fc_sam$Naive, series="Naive") +
-  autolayer(fc_sam$Naive2, series="Naive2") +
+  ggtitle(paste("Historical data of series:",df_sam$st)) +
+  xlab("Year") +
+  ylab("value")
+
+autoplot(df_sam$x) +
+  autolayer(df_sam$xx, series="outsample") +
   autolayer(fc_sam$Theta, series="Theta") +
-  autolayer(fc_sam$Comb, series="Comb") 
+  autolayer(fc_sam$Comb, series="Comb") +
+  ggtitle(paste("Forecasting methods:",df_sam$st)) +
+  xlab("Year") +
+  ylab("value")
 
 # initialize values 
 fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")

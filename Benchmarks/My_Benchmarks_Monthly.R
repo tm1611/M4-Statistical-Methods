@@ -17,10 +17,12 @@ fc_sam <- my_benchmarks(df_sam$x, fh=df_sam$h)
 
 autoplot(df_sam$x) +
   autolayer(df_sam$xx, series="outsample") +
-  autolayer(fc_sam$Naive2, series="Naive2") +
   autolayer(fc_sam$Comb, series="Comb") +
   autolayer(fc_sam$ARIMA, series="Auto.ARIMA") + 
-  autolayer(fc_sam$ETS, series="ETS") 
+  autolayer(fc_sam$ETS, series="ETS") +
+  ggtitle(paste("Forecasting methods:",df_sam$st)) +
+  xlab("Year") +
+  ylab("value")
 
 # intialize values
 fc_names <- c("Naive2", "Comb", "ARIMA", "ETS", "ETSARIMA")
