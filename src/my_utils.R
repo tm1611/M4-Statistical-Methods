@@ -212,3 +212,25 @@ my_accuracy <- function(Total_sMAPE, Total_MASE){
   data.frame(sMAPE_mean, MASE_mean, OWA_mean, OWA_M4)
 }
 
+# my accuracy_v2
+my_accuracy_v2 <- function(Total_sMAPE, Total_MASE){
+  sMAPE_mean <- round( (colMeans(Total_sMAPE, na.rm = T)*100),4 )
+  MASE_mean <- round( colMeans(Total_MASE, na.rm=T),4 )
+  sMAPE_median <- round(apply(Total_sMAPE, MARGIN = 2, median)*100,4)
+  MASE_median <- round(apply(Total_MASE, MARGIN = 2, median),4)
+  
+  # Calculate mean OWA
+  rel_sMAPE <- Total_sMAPE / Total_sMAPE[,"Naive2"]
+  rel_MASE <- Total_MASE / Total_MASE[,"Naive2"]
+  OWA <- (rel_sMAPE + rel_MASE) / 2
+  OWA_mean <- round( colMeans(OWA, na.rm=T),4 )
+  
+  # Calculate mean OWA according M4
+  rel_sMAPE_M4 <- colMeans(Total_sMAPE, na.rm=T) / colMeans(Total_sMAPE, na.rm = T)["Naive2"]
+  rel_MASE_M4 <- colMeans(Total_MASE, na.rm=T) / colMeans(Total_MASE, na.rm=T)["Naive2"]
+  OWA_M4 <- round( ((rel_sMAPE_M4 + rel_MASE_M4) / 2), 4)
+  # results
+  data.frame(sMAPE_mean, sMAPE_median, MASE_mean, MASE_median, OWA_mean, OWA_M4)
+}
+
+
