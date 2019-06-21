@@ -48,7 +48,40 @@ length(M4_Hourly)
 saveRDS(M4_Hourly, file="data/M4_Hourly.rds")
 rm(M4_Hourly)
 
+### Data by domain
 
+# Demographic
+M4_Demographic <- Filter(function(df) df$type=="Demographic", M4)
+length(M4_Demographic)
+saveRDS(M4_Demographic, file="data/M4_Demographic.rds")
+rm(M4_Demographic)
 
+# Finance
+M4_Finance <- Filter(function(df) df$type=="Finance", M4)
+length(M4_Finance)
+saveRDS(M4_Finance, file="data/M4_Finance.rds")
+rm(M4_Finance)
 
+# Industry
+M4_Industry <- Filter(function(df) df$type=="Industry", M4)
+length(M4_Industry)
+saveRDS(M4_Industry, file="data/M4_Industry.rds")
+rm(M4_Industry)
 
+# Macro
+M4_Macro <- Filter(function(df) df$type=="Macro", M4)
+length(M4_Macro)
+saveRDS(M4_Macro, file="data/M4_Macro.rds")
+rm(M4_Macro)
+
+# Micro
+M4_Micro <- Filter(function(df) df$type=="Micro", M4)
+length(M4_Micro)
+saveRDS(M4_Micro, file="data/M4_Micro.rds")
+rm(M4_Micro)
+
+# Other
+M4_Other <- Filter(function(df) df$type=="Other", M4)
+length(M4_Other)
+saveRDS(M4_Other, file="data/M4_Other.rds")
+rm(M4_Other)
