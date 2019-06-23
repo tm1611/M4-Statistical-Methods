@@ -40,7 +40,7 @@ dim(Total_sMAPE)
 # forecasts
 for (i in 1:length(df)){
   N <- length(df)
-  
+
   output <- wrapper_fun(df[[i]], benchmarks)
   Total_sMAPE[i,] <- output$sMAPE
   Total_MASE[i,] <- output$MASE
@@ -68,11 +68,11 @@ for (i in 1:length(df)){
   period[i] <- df[[i]]$period
 }
 
-results_benchmarks_demographic <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(res_bm8_monthly, file="results/M4_benchmarks8/results_benchmarks8_demographic.csv")
+results_bm8_demographic <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(results_bm8_demographic, file="results/M4_benchmarks8/results_bm8_demographic.csv")
 
 results_table_bm8_demographic <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(results_table_bm8_demographic, file="results/M4_benchmarks8/results_benchmarks8_demographic_table.csv")
+write.csv(results_table_bm8_demographic, file="results/M4_benchmarks8/results_bm8_demographic_table.csv")
 
 
 
