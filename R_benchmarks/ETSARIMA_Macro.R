@@ -7,8 +7,8 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Macro.rds"
-#df <- give_sam(readRDS(file=my_data),size = 10, seed = 16)
-df <- readRDS(file=my_data)
+df <- give_sam(readRDS(file=my_data),size = 1940, seed = 16) #10%
+#df <- readRDS(file=my_data)
 length(df)
 
 ## plot random series 
@@ -61,8 +61,8 @@ for (i in 1:length(df)){
 }
 
 results_Macro <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(results_Macro, file="results/M4_ETSARIMA/results_Macro.csv")
+write.csv(results_Macro, file="results/M4_ETSARIMA/results_Macro_1940.csv")
 
 results_table_Macro <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(results_table_Macro, file="results/M4_ETSARIMA/results_table_Macro.csv")
+write.csv(results_table_Macro, file="results/M4_ETSARIMA/results_Macro_1940_table.csv")
 

@@ -7,7 +7,7 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Demographic.rds"
-#df <- give_sam(readRDS(file=my_data),size = 10, seed = 16)
+df <- give_sam(readRDS(file=my_data),size = 1000, seed = 16)
 df <- readRDS(file=my_data)
 length(df)
 
@@ -61,8 +61,8 @@ for (i in 1:length(df)){
 }
 
 results_Demographic <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(results_Demographic, file="results/M4_ETSARIMA/results_Demographic.csv")
+write.csv(results_Demographic, file="results/M4_ETSARIMA/results_Demographic_1000.csv")
 
 results_table_Demographic <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(results_table_Demographic, file="results/M4_ETSARIMA/results_table_Demographic.csv")
+write.csv(results_table_Demographic, file="results/M4_ETSARIMA/results_Demographic_1000_table.csv")
 

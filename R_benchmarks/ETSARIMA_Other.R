@@ -7,8 +7,8 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Other.rds"
-#df <- give_sam(readRDS(file=my_data),size = 10, seed = 16)
-df <- readRDS(file=my_data)
+df <- give_sam(readRDS(file=my_data),size = 1000, seed = 11) # =max{1000,0.1*data}
+#df <- readRDS(file=my_data)
 length(df)
 
 ## plot random series 
@@ -33,17 +33,17 @@ dim(Total_MASE)
 # forecasts
 for (i in 1:length(df)){
   n <- length(df)
-  if(i%%10==0){
+  output <- wrapper_fun(df[[i]], my_benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+  
+  if(i%%1==0){
     pct <- round((i/n)*100,2)
     print(noquote(paste0(i, "/", n, " - ", pct, "%")))
   } 
   if(i%%n==0){
     print("Done!")
   }
-  
-  output <- wrapper_fun(df[[i]], my_benchmarks)
-  Total_sMAPE[i,] <- output$sMAPE
-  Total_MASE[i,] <- output$MASE
 }
 
 ## Calculate accuracy measures
@@ -61,8 +61,8 @@ for (i in 1:length(df)){
 }
 
 results_Other <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(results_Other, file="results/M4_ETSARIMA/results_Other.csv")
+write.csv(results_Other, file="results/M4_ETSARIMA/results_Other_1000.csv")
 
 results_table_Other <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(results_table_Other, file="results/M4_ETSARIMA/results_table_Other.csv")
+write.csv(results_table_Other, file="results/M4_ETSARIMA/results_Other_1000_table.csv")
 

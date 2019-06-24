@@ -7,8 +7,8 @@ source("src/my_utils.R")
 
 # load data
 my_data <- "data/M4_Finance.rds"
-#df <- give_sam(readRDS(file=my_data),size = 10, seed = 16)
-df <- readRDS(file=my_data)
+df <- give_sam(readRDS(file=my_data),size = 2453, seed = 16) #10%
+#df <- readRDS(file=my_data)
 length(df)
 
 ## plot random series 
@@ -61,8 +61,8 @@ for (i in 1:length(df)){
 }
 
 results_Finance <- data.frame(Series=st, insample_n=n, period=period, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(results_Finance, file="results/M4_ETSARIMA/results_Finance.csv")
+write.csv(results_Finance, file="results/M4_ETSARIMA/results_Finance_2453.csv")
 
 results_table_Finance <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(results_table_Finance, file="results/M4_ETSARIMA/results_table_Finance.csv")
+write.csv(results_table_Finance, file="results/M4_ETSARIMA/results_Finance_2453_table.csv")
 
