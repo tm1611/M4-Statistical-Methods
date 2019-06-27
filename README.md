@@ -1,5 +1,27 @@
-# MT TM1
-Folder 1 for MT focusing on:
+# Folder Structure
+
+├── Jupyter Notebooks           <- Jupyter Notebooks using py
+│   └─── src                    <- Source code for use in notebooks
+├── RMarkdown                   <- .Rmd files (i.e. forecasting methods, benchmarks)
+│   └─── html_outputs           <- Outputs of .Rmd files as html
+├── R_benchmarks                <- R scripts for creating benchmarks + ETSARIMA
+│    └─── archive               <- Discarded r scripts for benchmarks (too slow, unmodularized)
+├── data                        <- Data used in this project (i.e. M4 by domain/period, example data)
+├── Images                      <- Images used in Rmd and notebook files
+├── results                     <- Results and tables
+│    └─── M4_ETSARIMA           
+│    └─── M4_benchmarks8
+│    └─── Reg_benchmarks8
+├── src                         <- Source code for use in this project
+    └─── data                   <- Scripts to download
+├── .gitattributes
+├── .gitignore
+├── MT TM1.Rproj                <- .Rproj file for project structure
+├── README.md                   <- Top-level README
+
+
+# MT-TM1
+Folder for MT part 1 focusing on:
 
 - Theoretical background
 - Statistical methods, i.e. benchmark methods of M4

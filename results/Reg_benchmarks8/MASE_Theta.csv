@@ -1,4 +1,4 @@
-"","sMAPE.Theta.Estimate","sMAPE.Theta.Std..Error","sMAPE.Theta.t.value","sMAPE.Theta.Pr...t..","r.squared","r.squared.adj","res.std.error","fstatistic_val","fstatistic_numdf","fstatistic_dendf"
+"","Coef.Estimate","Coef.Std..Error","Coef.t.value","Coef.Pr...t..","r.squared","r.squared.adj","res.std.error","fstatistic_val","fstatistic_numdf","fstatistic_dendf"
 "(Intercept)",0.09855281,0.03470389,2.83982055,0.0045148,0.278410601183776,0.278331216823783,0.782182166320551,3507.12156914011,11,99988
 "log(n)",0.10523445,0.00408303,25.77358703,0,0.278410601183776,0.278331216823783,0.782182166320551,3507.12156914011,11,99988
 "periodHourly",-0.21648136,0.04219387,-5.13063595,2.9e-07,0.278410601183776,0.278331216823783,0.782182166320551,3507.12156914011,11,99988

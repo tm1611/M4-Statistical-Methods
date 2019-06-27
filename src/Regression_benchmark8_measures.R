@@ -36,23 +36,26 @@ ggplot(df, aes(x=n)) + geom_histogram()
   
 # boxplots
 ggplot(df, aes(x=period, y=n)) +
-  geom_boxplot() + 
+  geom_boxplot() +
+  ggtitle("Boxplots: Series length by period") +
   coord_flip() 
 
 ggplot(df, aes(x=type, y=n)) +
   geom_boxplot() + 
+  ggtitle("Boxplots: Series length by domain") +
   coord_flip()
 
 # relations length (n)? 
 idx <- sample(x = df$X, size = 5000)
 
 ggplot(df[idx,], aes(x=n, y=sMAPE.Naive2)) +
+  ggtitle("Naive2 Forecast") + ylab("sMAPE") +
   geom_point()
 
 ### Regression Analysis sMAPE ###
 # make_list function 
 make_list <- function(lm_object){
-  list(sMAPE.Theta=round(summary(lm_object)$coefficients,8), 
+  list(Coef=round(summary(lm_object)$coefficients,8), 
        r.squared = summary(lm_object)$r.squared, 
        r.squared.adj = summary(lm_object)$adj.r.squared,
        res.std.error = summary(lm_object)$sigma,
@@ -60,6 +63,17 @@ make_list <- function(lm_object){
        fstatistic_numdf = summary(lm_object)$fstatistic[2],
        fstatistic_dendf = summary(lm_object)$fstatistic[3])
 }
+
+# Calculate individual Weighted Average
+make_WA <- function(sMAPE, MASE){
+  rel_sMAPE <- sMAPE/df$sMAPE.Naive2
+  rel_MASE <- MASE/df$MASE.Naive2
+  WA <- (rel_sMAPE + rel_MASE)/2
+  return(WA)
+} 
+
+df$WA.Theta <- make_WA(df$sMAPE.Theta, df$MASE.Theta)
+df$WA.Comb <- make_WA(df$sMAPE.Comb, df$MASE.Comb)
 
 # sMAPE.Theta 
 fit1 <- lm(log(sMAPE.Theta) ~ log(n) + period + type, data = df)
@@ -90,3 +104,9 @@ summary(fit4)
 l4 <- make_list(fit4)
 write.csv(l4, file="results/Reg_benchmarks8/MASE_Comb.csv")
 
+### Regression of Weighted average ###
+fit5 <- lm(WA.Theta ~ log(n) + period + type, data=df)
+summary(fit5)
+
+fit6 <- lm(WA.Comb ~ log(n) + period + type, data=df)
+summary(fit6)
