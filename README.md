@@ -1,5 +1,5 @@
 # Folder Structure
-
+```
 ├── Jupyter Notebooks           <- Jupyter Notebooks using py
 │   └─── src                    <- Source code for use in notebooks
 ├── RMarkdown                   <- .Rmd files (i.e. forecasting methods, benchmarks)
@@ -18,7 +18,7 @@
 ├── .gitignore
 ├── MT TM1.Rproj                <- .Rproj file for project structure
 ├── README.md                   <- Top-level README
-
+```
 
 # MT-TM1
 Folder for MT part 1 focusing on:
