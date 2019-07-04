@@ -58,7 +58,7 @@ In addition, I added the following forecast methods:
 
 Two basic ML methods were used in the competition:
 
-- 
--
+- RNN Bench: Sequential recurrent neural network (RNN) using `SimpleRNN` layer with 6 nodes in Keras.
+- MLP Bench: Multilayer perceptron (MLP) network using `MLPRegressor` with 6 units from scikit learn.
 
-Both methods in the given formulation performed poorly in the competition
+Both methods in the given formulation performed badly in the M4 competition
