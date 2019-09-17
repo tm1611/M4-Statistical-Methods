@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>DeepAR - 01</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>DeepAR - 01 - Theory</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,12 +11775,82 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="DeepAR">DeepAR<a class="anchor-link" href="#DeepAR">&#182;</a></h1><p>Ressources:</p>
+<h1 id="DeepAR">DeepAR<a class="anchor-link" href="#DeepAR">&#182;</a></h1><p>Contents:</p>
 <ul>
-<li>Main paper: <a href="https://arxiv.org/pdf/1704.04110">Salinas et al. (2017). "DeepAR: Probabilistic forecasting with autoregressive recurrent networks"</a></li>
+<li>Overview Main paper: <a href="https://arxiv.org/pdf/1704.04110">Salinas et al. (2017). "DeepAR: Probabilistic forecasting with autoregressive recurrent networks"</a></li>
+<li>AWS Docs: <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar.html">DeepAR Forecasting Algorithm</a></li>
 </ul>
-<h2 id="Overview">Overview<a class="anchor-link" href="#Overview">&#182;</a></h2><h4 id="What-is-DeepAR?">What is DeepAR?<a class="anchor-link" href="#What-is-DeepAR?">&#182;</a></h4><p>DeepAR is a supervised learning algorithm for time series forecasting that uses recurrent neural networks (RNN) to produce probabilistic forecasts.</p>
-<h4 id="DeepAR-highlights">DeepAR highlights<a class="anchor-link" href="#DeepAR-highlights">&#182;</a></h4><ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Salinas-et-al.-(2017)">Salinas et al. (2017)<a class="anchor-link" href="#Salinas-et-al.-(2017)">&#182;</a></h2><h3 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">&#182;</a></h3><h3 id="Model">Model<a class="anchor-link" href="#Model">&#182;</a></h3><p>Denoting the value of time series i at time t by $z_{i,t}$, our goal is to model the conditional distribution
+$$
+P(z_{i, t_0 : T}|z_{i,1:t_0-1}, x_{i,1:T} )
+$$</p>
+<p>where</p>
+<p>$$
+z_{i, t_0 : T} := [z_{i,t_0}, z_{i, t_0 +1}, ..., z_{i, T}]
+$$</p>
+<p>is the future of time series until T. The difference between $t_0$ and $T$ is the forecast horizon, i.e. $z_{i,t_0 + 4}$ is equal to a forecast horizon of $h=4$.</p>
+<p>All previous realisations of the target time series until $t-1$ are denoted by</p>
+<p>$$
+z_{i,1:t_0-1} := [z_{i,1}, ..., z_{i,t_0 - 2}, z_{i,t_0 - 1}]
+$$</p>
+<p>$t_0$ denotes the time point from which we assume $z_{i,t}$ to be unknown at prediction time, $x_{i, 1:T}$ are covariates that are assumed to be known for all time points (?also for the future?).</p>
+<p>According to this notation, the time range $[1, t_0-1]$ corresponds to the "past" that is used for training/conditioning, whereas the time range $[t_0, T]$ indicates the prediction range.</p>
+<ul>
+<li>Time index t is relative, i.e. $t=1$ can correspond to a different actual time period for each i.</li>
+</ul>
+<p>The model's distribution is assumed to be</p>
+<p>\begin{align}
+Q_{\theta}(z_{i,t_0:T} | z_{i,1:t_0-1}, x_{i,1:T}) 
+\end{align}</p>
+<ul>
+<li>depends on own previous values until $t_0-1$ (the last known timepoint.</li>
+<li>also depends on feature variables x<ul>
+<li>for previous timepoints</li>
+<li>as well as for time points from $t_0:T$ (unknown to  end of forecast horizon) &lt;- estimation of feature variables? </li>
+</ul>
+</li>
+</ul>
+<p>The model distribution $Q_{\theta}$ consists of a product of likelihood factors</p>
+<p>\begin{align}
+Q_{\theta}(z_{i,t_0:T}|z_{i,1:t_0-1},x_{i,1:T}) = \prod_{t=t_0}^T Q_{\theta}(z_{i,t}|z_{i,1:t-1},x_{i,1:T}) = \prod_{t=t_0}^T \ell( z_{i,t}|\theta(h_{i,t}, \Theta))
+\end{align}</p>
+<p>where 
+$$
+h_{i,t} = h(h_{i, t-1}, z_{i,t-1}, x_{i,t} , \Theta)
+$$</p>
+<p>and h being a multi-layer recurrent neural network with LSTM cells.</p>
+<ul>
+<li>Model is autoregressive (AR) in the sense that it takes in observations at the last time step $z_{i,t-1}$ as an input, as well as recurrent, i.e. previous output of the network $h_{t-1}$ is fed back as an input at the next time step. </li>
+</ul>
+<p>More precisely (based on the docs), DeepAR adds frequency-specific time-lags which are used as additional feature variables.</p>
+<p>Based on the frequency, the following feature variables are added:</p>
+<p><img src="../images/frequency_feature_table.png" width="80%"></p>
+<ul>
+<li>Likelihood $l(z_{i,t} | \theta(h_{i,t})$ is a fixed conditional distribution</li>
+<li>Parameters are given by a function $\theta(h_{i,t}, \Theta)$ </li>
+<li><p>Network output: $h_{i,t}$</p>
+</li>
+<li><p>?Information about (...)?</p>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="DeepAR:-AWS-Forecasting-Algorithm">DeepAR: AWS Forecasting Algorithm<a class="anchor-link" href="#DeepAR:-AWS-Forecasting-Algorithm">&#182;</a></h2><h3 id="What-is-DeepAR?">What is DeepAR?<a class="anchor-link" href="#What-is-DeepAR?">&#182;</a></h3><p>DeepAR is a supervised learning algorithm for time series forecasting that uses recurrent neural networks (RNN) to produce probabilistic forecasts.</p>
+<h3 id="DeepAR-highlights">DeepAR highlights<a class="anchor-link" href="#DeepAR-highlights">&#182;</a></h3><ul>
 <li>Claims to be able to be more accurate compared to classical forecasting techniques such as ARIMA or ES.</li>
 <li>Cold start forecasting: Can generate forecast for a time series with little or no existing historical data (forecasts based on the net trained with similar series)</li>
 <li>Can produce points forecasts as well as probabilistic forecasts (i.e. forecast lies between X and Y with Z% probability)</li>
@@ -11788,7 +11858,7 @@ div#notebook {
 <li>DeepAR forecasting algorithm can be used with AWS </li>
 </ul>
 <p>For an overview of the Amazon Sagemaker, refer to the <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html">SageMaker documentation</a>.</p>
-<h2 id="DeepAR-Forecasting-Algorithm">DeepAR Forecasting Algorithm<a class="anchor-link" href="#DeepAR-Forecasting-Algorithm">&#182;</a></h2><p>The following notes are based on Amazon's documentation: <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar.html">DeepAR Forecasting Algorithm</a> as one of the built-in algorithms in the Amazon SageMaker.</p>
+<h3 id="DeepAR-Forecasting-Algorithm">DeepAR Forecasting Algorithm<a class="anchor-link" href="#DeepAR-Forecasting-Algorithm">&#182;</a></h3><p>The following notes are based on Amazon's documentation: <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar.html">DeepAR Forecasting Algorithm</a> as one of the built-in algorithms in the Amazon SageMaker.</p>
 <blockquote><p>DeepAR forecasting algorithm is a supervised learning algorithm for forecasting <strong>scalar (one-dimensional)</strong> time series using <strong>recurrent neural networks (RNN)</strong>.</p>
 </blockquote>
 <p>Traditional methods, such as ARIMA or ETS, fit a single model to each individual time series. Subsequently, this model is used to extrapolate the time series into the future. There is no information sharing between the individual time series.</p>
@@ -11807,31 +11877,157 @@ div#notebook {
 </ul>
 </li>
 </ul>
-<h3 id="How-the-DeepAR-Algorithm-Works">How the DeepAR Algorithm Works<a class="anchor-link" href="#How-the-DeepAR-Algorithm-Works">&#182;</a></h3><p>Amazon docs: <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar_how-it-works.html">Link</a></p>
-<p>During training:</p>
-<ul>
-<li>accepts training dataset and optional test dataset</li>
-<li>test data to evaluate the trained model.</li>
-<li>Both, training and test datasetes consist of one or, preferably, more target time series</li>
-<li>Each target time series can optionally be associated with a vector of feature time series and a vector of categorical features. </li>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Input/Output-Interface-for-the-DeepAR-Algorithm">Input/Output Interface for the DeepAR Algorithm<a class="anchor-link" href="#Input/Output-Interface-for-the-DeepAR-Algorithm">&#182;</a></h3><ul>
+<li>Two supported data channels: <code>train</code>, <code>test</code>(optional)<ul>
+<li><code>test</code>: data used to evaluate model after taining</li>
 </ul>
-<p>Denoting the value of time series i at time t by $z_{i,t}$, our goal is to model the conditional distribution
-$$
-P(z_{i, t_0 : T}|z_{i,1:t_0-1}, x_{i,1:T} )
-$$</p>
-<p>where</p>
-<p>$$
-z_{i, t_0 : T} := [z_{i,t_0}, z_{i, t_0 +1}, ..., z_{i, T}]
-$$</p>
-<p>is the future of time series until T. The difference between $t_0$ and $T$ is the forecast horizon, i.e. $z_{i,t_0 + 4}$ is equal to a forecast horizon of $h=4$.</p>
-<p>All previous realisations of the target time series until $t-1$ are denoted by</p>
-<p>$$
-z_{i,1:t_0-1} := [z_{i,1}, ..., z_{i,t_0 - 2}, z_{i,t_0 - 1}]
-$$</p>
-<p>$t_0$ denotes the time point from which we assume $z_{i,t}$ to be unknown at prediction time, $x_{i, 1:T}$ are covariates that are assumed to be known for all time points (?also for the future?).</p>
-<p>According to this notation, the time range $[1, t_0-1]$ corresponds to the "past" that is used for training/conditioning, whereas the time range $[t_0, T]$ indicates the prediction range.</p>
+</li>
+<li>Training and test data can be provided as <code>JSON Lines</code> format.</li>
+<li>Files can be in gzip or Parquet</li>
+</ul>
+<p>JSON Lines:</p>
 <ul>
-<li>Time index t is relative, i.e. $t=1$ can correspond to a different actual time period for each i.</li>
+<li><a href="http://jsonlines.org/">JSON Lines</a>: text format, also called newline-delimited JSON. Conventient format for storing structured data. <ul>
+<li>JSON Lines has three requirements: UTF-8 Encoding,  Each Line is a Valid JSON Value, and Line Seperator is <code>\n</code> </li>
+<li>File extension <code>.jsonl</code></li>
+<li><code>gzip</code> or <code>bzip2</code> are recommended for saving space, resulting in <code>.jsonl.gz</code> or <code>jsonl.bz2</code> files.</li>
+</ul>
+</li>
+</ul>
+<p>Parquet:</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Apache_Parquet">Apache Parquet</a> is a column-oriented data storage format</li>
+<li>Provides efficient data compression and encoding schemes</li>
+</ul>
+<p>Specifying paths:</p>
+<ul>
+<li>Specify single file or a directory that contains multiple files (can be stored in subdirectories)</li>
+<li>If directory is specified: DeepAR uses all files in the directory as inputs for the corresponding channel, <ul>
+<li>except those that start with a period (.) and those named <code>_SUCCESS</code></li>
+<li>ensures that you can directly use output folders produced by Spark jobs as input channels for DeepAR training jobs</li>
+</ul>
+</li>
+</ul>
+<p>Input files:</p>
+<ul>
+<li>DeepAR determines input format from the file exensions (<code>.json</code>, <code>json.gz</code>, or <code>parquet</code>) in the specified input path. </li>
+</ul>
+<p>Records in your input files should contain:</p>
+<ul>
+<li><code>start</code> - Start timestamp as string with the format <code>YYYY-MM-DD HH:MM:SS</code>. </li>
+<li><code>target</code> - Represents the time series. An array of floating-point values or integers. <ul>
+<li>Missing values can be encoded as <code>null</code> literals or <code>"NaN"</code> strings in JSON, or as <code>nan</code>floating-point values in Parquet. </li>
+</ul>
+</li>
+</ul>
+<p>Optional inputs:</p>
+<ul>
+<li><code>dynamic_feat</code>(optional) - Vector of custom feature time series (dynamic features). <ul>
+<li>In the form of an array of arrays of floating-point values or integers</li>
+<li>Must have the same number of inner arrays (same number of feature time series)</li>
+<li>Each inner array must have the same length as the associated target value. </li>
+<li>Missing values are not supported in the features</li>
+<li>Example: If target time seies represents the demand of different products, an associated dynamic_feat might be a boolean time-series which indicates whether a promotion was applied (1) to the particular product or not (0). </li>
+</ul>
+</li>
+</ul>
+
+<pre><code>{"start": ..., "target": [1, 5, 10, 2], "dynamic_feat": [[0, 1, 1, 0]]}</code></pre>
+<p>Here, there is one time series without specified start date and of length 4, one dynamic feature (one array of arrays)</p>
+<ul>
+<li><code>cat</code> (optional) - An array of categorical features that can be used to encode the groups that the record belongs to. <ul>
+<li>Must be encoded as a 0-based sequence of positive integers. For example, categorical domain {R,G,B} can be encoded as {0, 1, 2}. All values from each categorical domain must be represented in the training dataset.</li>
+<li>Each categorical feature is embedded in a low-dimensional space whose dimensionality is controlled by <code>embedding_dimension</code></li>
+</ul>
+</li>
+</ul>
+<p>If a JSON file is used, it mus be in JSON Lines format. For example:</p>
+
+<pre><code>{"start": "2009-11-01 00:00:00", "target": [4.3, "NaN", 5.1, ...], "cat": [0, 1], "dynamic_feat": [[1.1, 1.2, 0.5, ...]]}
+
+{"start": "2012-01-30 00:00:00", "target": [1.0, -5.0, ...], "cat": [2, 3], "dynamic_feat": [[1.1, 2.05, ...]]}
+
+{"start": "1999-01-30 00:00:00", "target": [2.0, 1.0], "cat": [1, 4], "dynamic_feat":
+ [[1.3, 0.4]]}</code></pre>
+<p>In this example, each time series has two associated categorical features and one time series features.</p>
+<p>For Parquet:</p>
+<ul>
+<li>"start" can be datetime type.</li>
+<li>Parquet files can be compressed using gzip or snappy compression</li>
+</ul>
+<p>What happens if the algorithm is trained without the optional <code>cat</code> and <code>dynamic_feat</code>?</p>
+<ul>
+<li>learns a "global" model, <ul>
+<li>that is a model that is agnostic to the specific identity of the target time series at inference time and is condtioned only on its shape. </li>
+</ul>
+</li>
+</ul>
+<p>What if the model is conditioned on the <code>cat</code> and <code>dynamic_feat</code> feature data?</p>
+<ul>
+<li>Prediction will be influenced by the character of time series with the corresponding <code>cat</code> features. </li>
+<li>For example: <code>target</code> time series represents the demand of clothing items <ul>
+<li>Associate a two-dimensional cat vector that encodes the type of item (e.g. 0 = shoes, 1 = dress) in the first component and the color (e.g. 0 = red, 1 = blue) in the second component.</li>
+</ul>
+</li>
+</ul>
+
+<pre><code>{"start": ..., "target": ..., "cat": [0, 0], ...} # red shoes
+
+{"start": ..., "target": ..., "cat": [0, 1], ...} # blue dress</code></pre>
+<ul>
+<li>At inference, you can request predictions for targets with cat values that are combinations of the cat values observed in the trainind data, for example: </li>
+</ul>
+
+<pre><code>{"start": ..., "target": ..., "cat": [0, 1], ...} # red dress
+
+{"start": ..., "target": ..., "cat": [1, 1], ...} # blue dress</code></pre>
+<p>Guidelines for training data:</p>
+<ul>
+<li>Start time and length can differ</li>
+<li>Series must have the same <ul>
+<li>frequency,</li>
+<li>number of categorical features</li>
+<li>number of dynamic features </li>
+</ul>
+</li>
+<li>Shuffle training file wrt position of the series in the file. </li>
+<li><code>start</code> timestep is used to derive the internal features. </li>
+<li>If <code>cat</code> is used: All series must have the same number of categorical features. <ul>
+<li>Algorithm uses <code>cat</code> and extracts the cardinality of the groups. Can be disabled (default <code>cardinality</code> is <code>"auto"</code>)</li>
+<li>If model was trained using a cat feature, you must include it for inference</li>
+</ul>
+</li>
+<li>If trainind data contain <code>dynamic_feat</code>: Automatically used by algorithm<ul>
+<li>All series must have the same number of feature series </li>
+<li>Time points must correspond one-to-one to the time points in <code>target</code></li>
+<li>same length of <code>dynamic_feat</code> as <code>target</code>.</li>
+<li>can be disabled</li>
+<li>If model was trained with <code>dynamic_feat</code>, then it must be provided for inference. In addition, each of the features has to have the length of the provided target plus <code>prediction_length</code>. You must provide the feature value in the future. </li>
+</ul>
+</li>
+</ul>
+<p>Optional test channel data:</p>
+<ul>
+<li>If specified, then DeepAR evaluates trained model with different accuracy metrics </li>
+<li>Accuracy metrics: $RMSE$ and $wQuantileLoss$, which will be defined later in this doc.</li>
+<li>Specify the length of the forecast horizon by setting the <code>prediction_length</code> hyperparameter. </li>
+<li>Specify which quantiles to calculate the loss for by setting the <code>test_quantiles</code> hyperparameter. In addition to these, the average of the prescribed losses is reported as part of the training logs. </li>
+</ul>
+<p>For inference:</p>
+<ul>
+<li>DeepAR accepts JSON format and the following fields <ul>
+<li><code>"instances"</code>, including one or more time series in JSON Lines format</li>
+<li>A name of <code>"configuration"</code>, which includes parameters for generating the forecast.</li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -11841,7 +12037,77 @@ $$</p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Example">Example<a class="anchor-link" href="#Example">&#182;</a></h4><p>(Notation different to paper/above?)</p>
+<h2 id="Best-Practices-for-Using-the-DeepAR-Algorithm">Best Practices for Using the DeepAR Algorithm<a class="anchor-link" href="#Best-Practices-for-Using-the-DeepAR-Algorithm">&#182;</a></h2><p>During tuning of a DeepAR model:</p>
+<ul>
+<li><p>Split data in training and test dataset</p>
+<ul>
+<li>To create training and test data that fit the criteria (algorithm does not see test data): Use entire dataset as a test and remov last <code>prediction_length</code> points of each time series for training</li>
+</ul>
+</li>
+<li><p>Avoid using very large values for the <code>prediction_length</code> becaust this makes the model slow and less accuracte</p>
+<ul>
+<li>In those cases: Consider aggregating data at a higher frequence (5min instead of 1min).</li>
+</ul>
+</li>
+<li><p>Lags enable model to look further back in the time series than the value specified for <code>context_length</code>.</p>
+<ul>
+<li>Hence, <code>context_length</code> does not need to be large</li>
+<li>Recommendation: Start with <code>context_length</code> equal to <code>prediction_length</code>. </li>
+</ul>
+</li>
+<li><p>In general, it is recommended to train DeepAR on as many time series as are available.</p>
+<ul>
+<li>Standard forecasting algorithms, such as ARIMA or ETS, might provide more accurate results on single time series as well as to a moderate number of series.</li>
+</ul>
+</li>
+</ul>
+<blockquote><p>DeepAR starts to outperform the standard methods when your dataset contains hundreds of related time series. Currently, DeepAR requires that the total number of observations available across all training time series is at least 300.</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="EC2-Instance-Recommendations-for-the-DeepAR-Algorithm">EC2 Instance Recommendations for the DeepAR Algorithm<a class="anchor-link" href="#EC2-Instance-Recommendations-for-the-DeepAR-Algorithm">&#182;</a></h2><p>Training:</p>
+<ul>
+<li>DeepAR can be trained on GPU and CPU instances in both single and multi-machine settings</li>
+<li>Recommend starting with a single CPU instance, i.e. <code>ml.c4.2xlage</code> or <code>ml.c4.4xlarge</code><ul>
+<li>Switch to GPU instances and multiple machines only when necessary. </li>
+</ul>
+</li>
+</ul>
+<p>Inference:</p>
+<ul>
+<li>DeepAR supports only CPU instances. </li>
+</ul>
+<p>Job failures:</p>
+<ul>
+<li>large values for <code>context_length</code>, <code>prediction_length</code>, <code>num_cells</code>, <code>num_layers</code> or <code>mini_batch_size</code> can create models that are too large for small instances. </li>
+<li>This may also occur when running hyperparameter tuning jobs. </li>
+<li>In that case, use an instance type large enough for the model tuning job and consider limiting the upper values for the critical parameters to avoid job failures.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="How-the-DeepAR-Algorithm-Works">How the DeepAR Algorithm Works<a class="anchor-link" href="#How-the-DeepAR-Algorithm-Works">&#182;</a></h2><ul>
+<li>AWS <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar_how-it-works.html">How the DeepAR Algorithm Works</a></li>
+</ul>
+<p>During training:</p>
+<ul>
+<li>accepts training dataset and optional test dataset</li>
+<li>test data to evaluate the trained model.</li>
+<li>Both, training and test datasetes consist of one or, preferably, more target time series</li>
+<li>Each target time series can optionally be associated with a vector of feature time series and a vector of categorical features. </li>
+</ul>
+<h3 id="Example">Example<a class="anchor-link" href="#Example">&#182;</a></h3><p>(Notation different to paper/above?)</p>
 <ul>
 <li>Training set i consists of </li>
 <li>a target time series $z_{i,t}$ </li>
@@ -11887,7 +12153,15 @@ $$</p>
 <li>forecasts a probability distribution for the next <code>prediction_length</code> values. </li>
 <li>DeepAR is trained on the entire dataset, hence forecasts takes into account patterns learned from similar time series. </li>
 </ul>
-<h4 id="Hyperparameters">Hyperparameters<a class="anchor-link" href="#Hyperparameters">&#182;</a></h4><p><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar_hyperparameters.html">DeepAR hyperparameters</a>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="DeepAR-Hyperparameters">DeepAR Hyperparameters<a class="anchor-link" href="#DeepAR-Hyperparameters">&#182;</a></h3><p><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/deepar_hyperparameters.html">DeepAR hyperparameters</a>:</p>
 <ul>
 <li><code>context_length</code></li>
 <li><code>epochs</code></li>
@@ -11913,219 +12187,234 @@ $$</p>
 <li><code>num_layers</code> - The number of hidden  layers in the RNN. Defualt value: 2</li>
 <li><code>test_quantiles</code> - Quantiles for which to calculate quantile loss on the test channel.</li>
 </ul>
-<h4 id="Tune-a-DeepAR-Model">Tune a DeepAR Model<a class="anchor-link" href="#Tune-a-DeepAR-Model">&#182;</a></h4>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Tune-a-DeepAR-Model">Tune a DeepAR Model<a class="anchor-link" href="#Tune-a-DeepAR-Model">&#182;</a></h2><ul>
+<li>Automatic model tuning (hyperparameter tuning) finds best version of a model by running many jobs that test a range of values</li>
+<li>objective metric can be predetermined</li>
+<li>More information about <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning.html">automatic model tuning</a></li>
+</ul>
+<h4 id="Metrics-computed-by-the-DeepAR-algorithm">Metrics computed by the DeepAR algorithm<a class="anchor-link" href="#Metrics-computed-by-the-DeepAR-algorithm">&#182;</a></h4><p>During training, three metrics are reported. Choose one of these as the objective:</p>
+<p>RMSE:</p>
+<ul>
+<li><code>test:RMSE</code> - RMSE between forecast and actual target computed on the test set </li>
+</ul>
+<p>$$
+RMSE = \sqrt{ \frac{1}{nT} \sum_{t=1}^{T} (\hat{y}_{i,t} - y_{i,t})^2  }
+$$</p>
+<p>where $y_{i,t}$ is the true value of time series i at the time t. $\hat{y}_{i,t}$ is the mean prediction. The sum is over all n time series in the test set and over the last T time points for each series. T corresponds to the forecast horizon (come on, why T?).</p>
+<ul>
+<li><code>test:mean_wQuantileLoss</code> - Average overall weighted quantile loss on the test set. Control which quantiles are used by setting the <code>test_quantiles</code> hyperparameter. </li>
+<li>For a quantile in the range [0,1], the weighted quantile loss is defined as:</li>
+</ul>
+<p>$$
+wQuantileLoss_{\tau} = 2 \frac{\sum_{i,t}Q_{i,t}^{(\tau)} }{\sum_{y,t} |y_{i,t}| }
+$$</p>
+<p>where</p>
+<p>\begin{equation}
+  Q_{i,t}^{(\tau)}=\begin{cases}
+    (1-\tau)\: |q_{i,t}^{(\tau)} - y_{i,t}| , &amp; \text{if $q_{i,t}^{(\tau)} &gt; y_{i,t}$}.\\
+    \tau \: |q_{i,t}^{(\tau)} - y_{i,t}|, &amp; \text{otherwise}.
+  \end{cases}
+\end{equation}</p>
+<p>$q_{i,t}^{(\tau)}$ is the $\tau$-quantile of the distribution that the model predicts.</p>
+<ul>
+<li><code>train:final_loss</code> - The training negative log-likelihood loss averaged over the last training epoch for the model. </li>
+</ul>
+<h4 id="Tunable-Hyperparameters-for-the-DeepAR-Algorithm">Tunable Hyperparameters for the DeepAR Algorithm<a class="anchor-link" href="#Tunable-Hyperparameters-for-the-DeepAR-Algorithm">&#182;</a></h4><p>After evaluating the test/training loss it may be necessary to tune some hyperparameters.</p>
+<p>The hyperparameters that have the greatest impact, listed in order from the most to least impactful, on DeepAR objective metrics are:</p>
+<ul>
+<li><code>epochs</code></li>
+<li><code>context_length</code></li>
+<li><code>mini_batch_size</code></li>
+<li><code>learning_rate</code></li>
+<li><code>num_cells</code></li>
+</ul>
+<p><img src="../images/deepar_hyperparameters.png"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="DeepAR-Inference-Formats">DeepAR Inference Formats<a class="anchor-link" href="#DeepAR-Inference-Formats">&#182;</a></h2><h3 id="DeepAR-JSON-Request-Formats">DeepAR JSON Request Formats<a class="anchor-link" href="#DeepAR-JSON-Request-Formats">&#182;</a></h3><p>Endpoint takes the following JSON request format:</p>
+<ul>
+<li><code>instances</code> field corresponds to the time series that should be forecasted by the model.</li>
+<li>Provide <code>cat</code> for each instance if model was trained with categories. Should be omitted otherwise</li>
+<li>If trained with custom dynamic features, provide same number of <code>dynamic_feat</code> values for each instance<ul>
+<li>Each should have a length given by <code>length(target)</code> + <code>prediction_length</code>, where <code>prediction_length</code> corresponds to forecast horizon. </li>
+</ul>
+</li>
+</ul>
+<p>Request:</p>
+
+<pre><code>{
+     "instances": [
+         {
+             "start": "2009-11-01 00:00:00",
+             "target": [4.0, 10.0, "NaN", 100.0, 113.0],
+             "cat": [0, 1],
+             "dynamic_feat": [[1.0, 1.1, 2.1, 0.5, 3.1, 4.1, 1.2, 5.0, ...]]
+         },
+         {
+             "start": "2012-01-30",
+             "target": [1.0],
+             "cat": [2, 1],
+             "dynamic_feat": [[2.0, 3.1, 4.5, 1.5, 1.8, 3.2, 0.1, 3.0, ...]]
+         },
+         {
+             "start": "1999-01-30",
+             "target": [2.0, 1.0],
+             "cat": [1, 3],
+             "dynamic_feat": [[1.0, 0.1, -2.5, 0.3, 2.0, -1.2, -0.1, -3.0, ...]]
+         }
+     ],
+     "configuration": {
+     "num_samples": 50,
+     "output_types": ["mean", "quantiles", "samples"],
+     "quantiles": ["0.5", "0.9"]
+     }
+}</code></pre>
+<p><code>configuration</code> is optional:</p>
+<ul>
+<li><code>configuration.num_samples</code> - sets number of sample paths that the model generates to estimate the mean and quantiles. </li>
+<li><code>configuration.output_types</code>- describes information that will be returned in the request. <ul>
+<li>valid values are: "mean", "quantiles, "samples"</li>
+<li>"quantiles" returns each of the quantile values in <code>configuration.quantiles</code> </li>
+<li>Specifying <code>samples</code> returns the raw samples used to calculate the other outputs. </li>
+</ul>
+</li>
+</ul>
+<h3 id="DeepAR-JSON-Response-Formats">DeepAR JSON Response Formats<a class="anchor-link" href="#DeepAR-JSON-Response-Formats">&#182;</a></h3><p>Response , where <code>[...]</code> are arrays of numbers:</p>
+
+<pre><code>{
+     "predictions": [
+         {
+             "quantiles": {
+                 "0.9": [...],
+                 "0.5": [...]
+             },
+             "samples": [...],
+             "mean": [...]
+             },
+             {
+                 "quantiles": {
+                     "0.9": [...],
+                     "0.5": [...]
+                 },
+                 "samples": [...],
+                 "mean": [...]
+             },
+             {
+                 "quantiles": {
+                     "0.9": [...],
+                     "0.5": [...]
+                 },
+                 "samples": [...],
+                 "mean": [...]
+             }
+     ]
+}</code></pre>
+<ul>
+<li>Response timeout of 60 seconds</li>
+<li>When passing multiple time series in a single request, forecasts are generated sequentially</li>
+<li>Forecast for each series typically takes about 300 to 1000 milliseconds, depending on model size, etc.</li>
+<li>Passing too many series may cause tieouts. </li>
+<li>Better: Send fewer series per request and send more requests (HOW?)<ul>
+<li>Because DeepAR uses multiple workers per instance, this achieves much higher throughpout by sending multiple requests in parallel. </li>
+</ul>
+</li>
+<li>DeepAR uses one worker per CPU for inference (defualt)</li>
+<li>Number of workers for inference can be overwritten when calling the SageMaker <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html">CreateModel</a> API.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Batch-Transform-with-the-DeepAR-Algorithm">Batch Transform with the DeepAR Algorithm<a class="anchor-link" href="#Batch-Transform-with-the-DeepAR-Algorithm">&#182;</a></h2><ul>
+<li>Getting inferences by using batch transform from data using the JSON Lines format. </li>
+<li>Each record is represented on a signle line as a JSON object, and lines are separated by newline characters. </li>
+</ul>
+<p>For example:</p>
+
+<pre><code>{"start": "2009-11-01 00:00:00", "target": [4.3, "NaN", 5.1, ...], "cat": [0, 1], "dynamic_feat": [[1.1, 1.2, 0.5, ..]]}
+
+{"start": "2012-01-30 00:00:00", "target": [1.0, -5.0, ...], "cat": [2, 3], "dynamic_feat": [[1.1, 2.05, ...]]}
+
+{"start": "1999-01-30 00:00:00", "target": [2.0, 1.0], "cat": [1, 4], "dynamic_feat": [[1.3, 0.4]]}</code></pre>
+<p>Note:</p>
+<ul>
+<li>Set <code>BatchStrategy</code>value to <code>SingleRecord</code> and </li>
+<li>set the <code>SplitType</code> value in the <code>TransformInput</code> configuration to <code>Line</code></li>
+<li>default values currently cause runtime failures. </li>
+</ul>
+<p>Configuration field:</p>
+<ul>
+<li>Set once for the entire batch inference job using environment variable named <code>DEEPAR_INFERENCE_CONFIG</code><ul>
+<li>Value can be passed when model is created by calling <code>CreateTransformJob</code> API. </li>
+</ul>
+</li>
+</ul>
+<p>If <code>DEEPAR_INFERENCE_CONFIG</code> is missing in the container environment, the inference container uses the following default:</p>
+
+<pre><code>{
+ "num_samples": 100,
+ "output_types": ["mean", "quantiles"],
+ "quantiles": ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
+}</code></pre>
+<ul>
+<li>Output is also in JSON Lines format. Predictions are encoded as objects identical to the ones returned by responses in online inference mode</li>
+</ul>
+<p>For example:</p>
+
+<pre><code>{ "quantiles": { "0.1": [...], "0.2": [...] }, "samples": [...], "mean": [...] }</code></pre>
+<p>In <code>TransformInput</code> configuration of the <code>CreateTransformJob</code> request:</p>
+<ul>
+<li>Set <code>AssembleWith</code> value to <code>Line</code>, as the default <code>None</code> concatenates all JSON objects on the same line. </li>
+</ul>
+<p>For example, SageMaker <code>CreateTransformJob</code> request for a DeepAR job with a custom <code>DEEPAR_INFERENCE_CONFIG</code>:</p>
+
+<pre><code>{
+     "BatchStrategy": "SingleRecord",
+     "Environment": {
+         "DEEPAR_INFERENCE_CONFIG" : "{ \"num_samples\": 200, \"output_types\": [\"mean\"] }",
+         ...
+    },
+     "TransformInput": {
+     "SplitType": "Line",
+     ...
+     },
+     "TransformOutput": {
+         "AssembleWith": "Line",
+         ...
+     },
+     ...
+}</code></pre>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!!</span>jupyter nbconvert DeepAR - <span class="m">01</span> - tm - .ipynb
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!!</span>jupyter nbconvert DeepAR - <span class="m">01</span> - Theory.ipynb
 </pre></div>
 
 </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-<div class="prompt output_prompt">Out[2]:</div>
-
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>[&#39;[NbConvertApp] CRITICAL | Bad config encountered during initialization:&#39;,
- &#34;[NbConvertApp] CRITICAL | Invalid argument: &#39;-&#39;&#34;,
- &#39;This application is used to convert notebook files (*.ipynb) to various other&#39;,
- &#39;formats.&#39;,
- &#39;&#39;,
- &#39;WARNING: THE COMMANDLINE INTERFACE MAY CHANGE IN FUTURE RELEASES.&#39;,
- &#39;&#39;,
- &#39;Options&#39;,
- &#39;&#39;,
- &#39;-------&#39;,
- &#39;&#39;,
- &#39;&#39;,
- &#39;&#39;,
- &#39;Arguments that take values are actually convenience aliases to full&#39;,
- &#39;Configurables, whose aliases are listed on the help line. For more information&#39;,
- &#34;on full configurables, see &#39;--help-all&#39;.&#34;,
- &#39;&#39;,
- &#39;&#39;,
- &#39;--debug&#39;,
- &#39;&#39;,
- &#39;    set log level to logging.DEBUG (maximize logging output)&#39;,
- &#39;&#39;,
- &#39;--generate-config&#39;,
- &#39;&#39;,
- &#39;    generate default config file&#39;,
- &#39;&#39;,
- &#39;-y&#39;,
- &#39;&#39;,
- &#39;    Answer yes to any questions instead of prompting.&#39;,
- &#39;&#39;,
- &#39;--execute&#39;,
- &#39;&#39;,
- &#39;    Execute the notebook prior to export.&#39;,
- &#39;&#39;,
- &#39;--allow-errors&#39;,
- &#39;&#39;,
- &#34;    Continue notebook execution even if one of the cells throws an error and include the error message in the cell output (the default behaviour is to abort conversion). This flag is only relevant if &#39;--execute&#39; was specified, too.&#34;,
- &#39;&#39;,
- &#39;--stdin&#39;,
- &#39;&#39;,
- &#34;    read a single notebook file from stdin. Write the resulting notebook with default basename &#39;notebook.*&#39;&#34;,
- &#39;&#39;,
- &#39;--stdout&#39;,
- &#39;&#39;,
- &#39;    Write notebook output to stdout instead of files.&#39;,
- &#39;&#39;,
- &#39;--inplace&#39;,
- &#39;&#39;,
- &#39;    Run nbconvert in place, overwriting the existing notebook (only &#39;,
- &#39;    relevant when converting to notebook format)&#39;,
- &#39;&#39;,
- &#39;--clear-output&#39;,
- &#39;&#39;,
- &#39;    Clear output of current file and save in place, &#39;,
- &#39;    overwriting the existing notebook.&#39;,
- &#39;&#39;,
- &#39;--no-prompt&#39;,
- &#39;&#39;,
- &#39;    Exclude input and output prompts from converted document.&#39;,
- &#39;--log-level=&lt;Enum&gt; (Application.log_level)&#39;,
- &#39;&#39;,
- &#39;    Default: 30&#39;,
- &#39;&#39;,
- &#34;    Choices: (0, 10, 20, 30, 40, 50, &#39;DEBUG&#39;, &#39;INFO&#39;, &#39;WARN&#39;, &#39;ERROR&#39;, &#39;CRITICAL&#39;)&#34;,
- &#39;&#39;,
- &#39;    Set the log level by value or name.&#39;,
- &#39;&#39;,
- &#39;--config=&lt;Unicode&gt; (JupyterApp.config_file)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    Full path of a config file.&#39;,
- &#39;&#39;,
- &#39;--to=&lt;Unicode&gt; (NbConvertApp.export_format)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;html&#39;&#34;,
- &#39;&#39;,
- &#39;    The export format to be used, either one of the built-in formats, or a&#39;,
- &#39;&#39;,
- &#39;    dotted object name that represents the import path for an `Exporter` class&#39;,
- &#39;&#39;,
- &#39;--template=&lt;Unicode&gt; (TemplateExporter.template_file)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    Name of the template file to use&#39;,
- &#39;&#39;,
- &#39;--writer=&lt;DottedObjectName&gt; (NbConvertApp.writer_class)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;FilesWriter&#39;&#34;,
- &#39;&#39;,
- &#39;    Writer class used to write the  results of the conversion&#39;,
- &#39;&#39;,
- &#39;--post=&lt;DottedOrNone&gt; (NbConvertApp.postprocessor_class)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    PostProcessor class used to write the results of the conversion&#39;,
- &#39;&#39;,
- &#39;--output=&lt;Unicode&gt; (NbConvertApp.output_base)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    overwrite base name use for output files. can only be used when converting&#39;,
- &#39;&#39;,
- &#39;    one notebook at a time.&#39;,
- &#39;&#39;,
- &#39;--output-dir=&lt;Unicode&gt; (FilesWriter.build_directory)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    Directory to write output(s) to. Defaults to output to the directory of each&#39;,
- &#39;&#39;,
- &#39;    notebook. To recover previous default behaviour (outputting to the current&#39;,
- &#39;&#39;,
- &#39;    working directory) use . as the flag value.&#39;,
- &#39;&#39;,
- &#39;--reveal-prefix=&lt;Unicode&gt; (SlidesExporter.reveal_url_prefix)&#39;,
- &#39;&#39;,
- &#34;    Default: &#39;&#39;&#34;,
- &#39;&#39;,
- &#39;    The URL prefix for reveal.js. This can be a a relative URL for a local copy&#39;,
- &#39;&#39;,
- &#39;    of reveal.js, or point to a CDN.&#39;,
- &#39;&#39;,
- &#39;    For speaker notes to work, a local reveal.js prefix must be used.&#39;,
- &#39;&#39;,
- &#39;--nbformat=&lt;Enum&gt; (NotebookExporter.nbformat_version)&#39;,
- &#39;&#39;,
- &#39;    Default: 4&#39;,
- &#39;&#39;,
- &#39;    Choices: [1, 2, 3, 4]&#39;,
- &#39;&#39;,
- &#39;    The nbformat version to write. Use this to downgrade notebooks.&#39;,
- &#39;&#39;,
- &#39;To see all available configurables, use `--help-all`&#39;,
- &#39;&#39;,
- &#39;Examples&#39;,
- &#39;--------&#39;,
- &#39;&#39;,
- &#39;    The simplest way to use nbconvert is&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert mynotebook.ipynb&#39;,
- &#39;    &#39;,
- &#39;    which will convert mynotebook.ipynb to the default format (probably HTML).&#39;,
- &#39;    &#39;,
- &#39;    You can specify the export format with `--to`.&#39;,
- &#34;    Options include [&#39;asciidoc&#39;, &#39;custom&#39;, &#39;html&#39;, &#39;latex&#39;, &#39;markdown&#39;, &#39;notebook&#39;, &#39;pdf&#39;, &#39;python&#39;, &#39;rst&#39;, &#39;script&#39;, &#39;slides&#39;]&#34;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert --to latex mynotebook.ipynb&#39;,
- &#39;    &#39;,
- &#39;    Both HTML and LaTeX support multiple output templates. LaTeX includes&#39;,
- &#34;    &#39;base&#39;, &#39;article&#39; and &#39;report&#39;.  HTML includes &#39;basic&#39; and &#39;full&#39;. You&#34;,
- &#39;    can specify the flavor of the format used.&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert --to html --template basic mynotebook.ipynb&#39;,
- &#39;    &#39;,
- &#39;    You can also pipe the output to stdout, rather than a file&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert mynotebook.ipynb --stdout&#39;,
- &#39;    &#39;,
- &#39;    PDF is generated via latex&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert mynotebook.ipynb --to pdf&#39;,
- &#39;    &#39;,
- &#39;    You can get (and serve) a Reveal.js-powered slideshow&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert myslides.ipynb --to slides --post serve&#39;,
- &#39;    &#39;,
- &#39;    Multiple notebooks can be given at the command line in a couple of &#39;,
- &#39;    different ways:&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert notebook*.ipynb&#39;,
- &#39;    &gt; jupyter nbconvert notebook1.ipynb notebook2.ipynb&#39;,
- &#39;    &#39;,
- &#39;    or you can specify the notebooks list in a config file, containing::&#39;,
- &#39;    &#39;,
- &#39;        c.NbConvertApp.notebooks = [&#34;my_notebook.ipynb&#34;]&#39;,
- &#39;    &#39;,
- &#39;    &gt; jupyter nbconvert --config mycfg.py&#39;,
- &#39;&#39;]</pre>
-</div>
-
-</div>
-
 </div>
 </div>
 
