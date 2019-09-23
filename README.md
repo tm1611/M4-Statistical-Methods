@@ -1,10 +1,11 @@
-# MT-TM1
-Folder for MT (part 1), focusing on:
+# M4 Statistical Methods
+
+Applying various statistical methods to the M4 dataset:
 
 - Theoretical background
 - Statistical methods, i.e. benchmark methods of M4
 
-FPP files covering chapters in the book, theoretical and practical aspects of the benchmark methods as well as general forecast aspects:
+Forecasting: Principles and Practice (FPP) files contain my notes of the respective chapters in the book, theoretical and practical aspects of the benchmark methods as well as general forecast aspects:
 
 > Hyndman, R. J., & Athanasopoulos, G. (2018) Forecasting: principles and practice, 2nd edition, OTexts: Melbourne, Australia.
 
