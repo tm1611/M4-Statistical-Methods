@@ -180,6 +180,30 @@ my_benchmarks <- function(input, fh){
   return(output)
 }
 
+ETSARIMA_LEGAKI <- function(input, fh){
+  des_input <- seas_adj(input, fh)$des_input
+  SIout <- seas_adj(input, fh)$SIout
+  f3 <- naive(des_input, h=fh)$mean*SIout # naive2
+  
+  # box cox lambda
+  lambda <- BoxCox.lambda(des_input, method="loglik", lower=0, upper=1)
+  data.bxcx <- BoxCox(des_input, lambda)
+  
+  # forecast
+  data.forecast <- thetaf(data.bxcx, h=fh)
+  data.forecast.inv<-InvBoxCox(data.forecast$mean, lambda)
+  f15 <- data.forecast.inv*SIout
+  
+  
+  f12 <- forecast(auto.arima(input), h=fh)$mean # ARIMA
+  f13 <- forecast(ets(input), h=fh)$mean # ETS 
+  f14 <- (f12+f13) / 2 # ETSARIMA
+  
+  output <- list(Naive2=f3, ARIMA=f12, ETS=f13, ETSARIMA=f14, Legaki=f15)
+  return(output)
+}
+
+
 # wrapper function
 wrapper_fun <- function(input, fun){
   insample <- input$x
