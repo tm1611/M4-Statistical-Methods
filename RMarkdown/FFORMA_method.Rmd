@@ -1,0 +1,29 @@
+---
+title: "FFORMA Feature-based Forecast Model Averaging"
+author: "Timo Meiendresch"
+date: "10/11/2019"
+knit: (function(input_file, encoding) {
+  out_dir <- 'html_outputs';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir, 'FFORMA_Feature-based_Forecast_Model_Averaging.html'))})
+---
+
+```{r, message=FALSE, echo=FALSE}
+rm(list=ls())
+graphics.off()
+```
+
+```{r, message=FALSE}
+# libraries
+library("fpp2")
+```
+
+- Ressource: [Github - FFORMA, Metalearning](https://github.com/robjhyndman/M4metalearning/blob/master/docs/metalearning_example.md)
+
+# Introduction 
+
+Given the name we already know a few things of this method: 
+
+1. aaa
+2. bbb
