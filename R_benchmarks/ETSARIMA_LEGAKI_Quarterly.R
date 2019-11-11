@@ -1,4 +1,4 @@
-### My_Benchmarks_Quarterly 
+### ETSARIMA_Legaki_Quarterly 
 rm(list=ls())
 graphics.off()
 library(forecast)
@@ -58,7 +58,7 @@ for (i in 1:length(df)){
 }
 
 res_quarterly <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(res_quarterly, file="results/M4_ETSARIMA_Legaki/results_quarterly.csv")
+write.csv(res_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_results_quarterly.csv")
 
 res_table_quarterly <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(res_table_quarterly, file="results/M4_ETSARIMA_Legaki/results_table_quarterly.csv")
+write.csv(res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_results_quarterly_table_quarterly.csv")
