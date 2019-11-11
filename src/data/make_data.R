@@ -85,3 +85,44 @@ M4_Other <- Filter(function(df) df$type=="Other", M4)
 length(M4_Other)
 saveRDS(M4_Other, file="data/M4_Other.rds")
 rm(M4_Other)
+
+# Yearly_X
+## Yearly_Micro
+M4_Yearly_Micro <- Filter(function(df) df$period=="Yearly" & df$type=="Micro", M4)
+length(M4_Yearly_Micro)
+saveRDS(M4_Yearly_Micro, file="data/M4_Yearly_Micro.rds")
+rm(M4_Yearly_Micro)
+
+## Yearly_Industry
+M4_Yearly_Industry <- Filter(function(df) df$period=="Yearly" & df$type=="Industry", M4)
+length(M4_Yearly_Industry)
+saveRDS(M4_Yearly_Industry, file="data/M4_Yearly_Industry.rds")
+rm(M4_Yearly_Industry)
+
+## Yearly_Macro
+M4_Yearly_Macro <- Filter(function(df) df$period=="Yearly" & df$type=="Macro", M4)
+length(M4_Yearly_Macro)
+saveRDS(M4_Yearly_Macro, file="data/M4_Yearly_Macro.rds")
+rm(M4_Yearly_Macro)
+
+## Yearly_Finance
+M4_Yearly_Finance <- Filter(function(df) df$period=="Yearly" & df$type=="Finance", M4)
+length(M4_Yearly_Finance)
+saveRDS(M4_Yearly_Finance, file="data/M4_Yearly_Finance.rds")
+rm(M4_Yearly_Finance)
+
+## Yearly_Demographic
+M4_Yearly_Demographic <- Filter(function(df) df$period=="Yearly" & df$type=="Demographic", M4)
+length(M4_Yearly_Demographic)
+saveRDS(M4_Yearly_Demographic, file="data/M4_Yearly_Demographic.rds")
+rm(M4_Yearly_Demographic)
+
+## Yearly_Other
+M4_Yearly_Other <- Filter(function(df) df$period=="Yearly" & df$type=="Other", M4)
+length(M4_Yearly_Other)
+saveRDS(M4_Yearly_Other, file="data/M4_Yearly_Other.rds")
+rm(M4_Yearly_Other)
+
+
+
+
