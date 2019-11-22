@@ -20,7 +20,9 @@ library(forecast)
 data(M4)
 
 # Weekly data
-df <- Filter(function(df) df$period=="Daily" & df$type!="Finance", M4)
+df <- Filter(function(df) df$period=="Weekly" & df$type=="Finance", M4)
+df <- Filter(function(df) df$period=="Weekly", M4)
+
 length(df)
 
 # one entry
