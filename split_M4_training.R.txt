@@ -100,7 +100,8 @@ ts_to_json <- function(idx, ts_list, type_list, start_date_list) {
       start = fix_start(start_date_list[[idx]]),
       target = ts_list[[idx]],
       feat_static_cat = c(idx, as.numeric(type_list[[idx]]))
-      # feat_dynamic_real = matrix(rexp(10 * length(ts_list[[idx]])), ncol =
+      
+	# feat_dynamic_real = matrix(rexp(10 * length(ts_list[[idx]])), ncol =
       #                              10)
     ),
     auto_unbox = TRUE
