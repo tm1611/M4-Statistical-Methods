@@ -13,6 +13,7 @@ length(df) # ==1236
 
 # plot a random series 
 df_sam <- give_sam(df, size=1)[[1]]
+df_sam <- df[[2]]
 fc_sam <- ETSARIMA_LEGAKI(df_sam$x, fh=df_sam$h)
 
 autoplot(df_sam$x) +

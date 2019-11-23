@@ -13,16 +13,19 @@ length(df)
 
 # plot a random series 
 df_sam <- give_sam(df, size=1)[[1]]
+df_sam <- df[[13414]]
 fc_sam <- ETSARIMA_LEGAKI(df_sam$x, fh=df_sam$h)
 
-autoplot(df_sam$x) +
+autoplot(main="M4 - Series Q13414", window(df_sam$x, 2004)) +
+  ylab("value") 
   autolayer(df_sam$xx, series="outsample") +
   autolayer(fc_sam$Naive2, series="Naive2") +
   autolayer(fc_sam$ARIMA, series="Auto.ARIMA") + 
   autolayer(fc_sam$ETS, series="ETS") +
-  autolayer(fc_sam$ETSARIMA, series="ETSARIMA") +
-  autolayer(fc_sam$Legaki, series="Legaki")
-
+#  autolayer(fc_sam$ETSARIMA, series="ETSARIMA") +
+  autolayer(fc_sam$Legaki, series="Legaki") +
+  
+  
 # intialize values
 fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(fc_names))
