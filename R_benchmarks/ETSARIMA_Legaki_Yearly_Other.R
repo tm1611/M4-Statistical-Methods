@@ -30,7 +30,9 @@ Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df), ncol = length(
 colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
 dim(Total_MASE)
 
-# forecasts
+
+#################
+### forecasts ###
 for (i in 1:length(df)){
   n <- length(df)
   if(i%%5==0){
@@ -46,9 +48,12 @@ for (i in 1:length(df)){
   Total_MASE[i,] <- output$MASE
 }
 
-## Calculate accuracy measures
+
+###################################
+### Calculate accuracy measures ###
 print(my_data)
 my_accuracy(Total_sMAPE, Total_MASE)
+
 
 ####################
 ### Save results ###
@@ -58,9 +63,10 @@ for (i in 1:length(df)){
   sn[i] <- df[[i]]$st
 }
 
-################
-# Change names #
-################
+
+################################
+### Save under correct names ###
+################################
 ETSARIMA_Legaki <- data.frame(Series=sn, sMAPE=Total_sMAPE, MASE=Total_MASE)
 write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Yearly_Other.csv")
 
