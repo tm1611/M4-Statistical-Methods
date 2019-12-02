@@ -23,24 +23,24 @@ source("src/ts_to_json.R")
 
 ## Filter by period and frequency  
 data(M4)
-#df <- Filter(function(df) df$period=="Monthly" & df$type=="Micro", M4)
-df <- Filter(function(df) df$period=="Monthly", M4)
+#df <- Filter(function(df) df$period=="Daily" & df$type=="Daily", M4)
+df <- Filter(function(df) df$period=="Daily", M4)
 rm(M4)
-length(df)
+as.character(df[[1]]$period); as.character(df[[1]]$type);length(df)
 
 # draw random sample 
 #my_df <- give_sam(df, size=10, seed=16)
 
 # train file
-json1 <- map(1:length(df), ts_to_json, df, test_data=FALSE, true_dates=FALSE, domain_cat=FALSE)
+json1 <- map(1:length(df), ts_to_json, df, test_data=FALSE, true_dates=FALSE, domain_cat=TRUE)
 
-sink("data/json/m4_monthly_train.json")
+sink("data/json/m4_daily_domain_train.json")
 json1 <- lapply(json1, cat)
 sink()
 
 # test file
-json2 <- map(1:length(df), ts_to_json, df, test_data=TRUE, true_dates=FALSE, domain_cat=FALSE)
+json2 <- map(1:length(df), ts_to_json, df, test_data=TRUE, true_dates=FALSE, domain_cat=TRUE)
 
-sink("data/json/m4_monthly_test.json")
+sink("data/json/m4_daily_domain_test.json")
 json2 <- lapply(json2, cat)
 sink()
