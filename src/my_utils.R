@@ -69,6 +69,7 @@ cal_MASE <- function(insample, outsample, forecasts){
   
   return(mase)
 }
+
 # to do: 
 # Unit tests
 # check if naive2 is calculated correctly
