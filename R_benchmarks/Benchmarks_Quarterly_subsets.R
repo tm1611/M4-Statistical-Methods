@@ -75,7 +75,7 @@ end_dates <- purrr::map(df,
            function(x){
              end(x$x)
           })
-# to do: write function that counts the series by enddate!!!
+# to do: write function that counts the series by enddate!
 
 
 # tsfeatures
