@@ -73,20 +73,78 @@ tsfeat_weekly <- bind_cols(
     Lambda = lambda) %>%
   mutate(Period = as.factor(Frequency))
 
+# add domain #
+# to do: function that takes out domain and item_id
+
+
+
 
 ####################################################################
-### Save results ###
+# Combine results
 sn <- rep(NA, length(df))
 n <- rep(NA, length(df))
+type <- rep(NA, length(df))
 
 for (i in 1:length(df)){
   sn[i] <- df[[i]]$st
   n[i] <- df[[i]]$n
+  type[i] <- df[[i]]$type
 }
 
-df_a <- data.frame(item_id=sn, n, tsfeat_weekly)
+df_a <- data.frame(item_id=sn, n=n, type=type, tsfeat_weekly)
 df_b <- error_test_file
 
 merged_df <- merge(x = df_a, y = df_b, by = "item_id")
 dim(merged_df)
+head(merged_df)
+
+#######################
+# dplyr what you want #
+
+head(merged_df)
+
+merged_df %>% 
+  select(item_id, n, type, Entropy, Trend, ACF1, Lambda, MASE, sMAPE, MSIS) -> df_processed
+
+head(df_processed)
+
+# Add OWA m4 #
+
+
+############################
+# change type of type
+df_processed$type <- factor(df_processed$type, 
+                  levels=c(1,2,3,4,5,6),
+                  labels=c("Demographic", "Finance", "Industry",
+                           "Macro", "Micro", "Other"))
+
+
+# descriptive statistcs
+df_processed[, purrr::map_lgl(df_processed, is.numeric)] %>% 
+  colMeans() %>% 
+  round(4)
+
+head(df_processed[,-1])
+
+#############################################################
+# Regressions # 
+
+# Check correlation with type and length
+summary(lm(formula = MASE ~ type + n, data=df_processed))
+summary(lm(formula = sMAPE ~ type + n, data=df_processed))
+
+# linear regression models tsfeatures 
+summary(lm(formula = MASE ~  n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+summary(lm(formula = sMAPE ~ n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+
+# linear regression models types plus tsfeatures
+summary(lm(formula = MASE ~ type + n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+summary(lm(formula = sMAPE ~ type + n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+
+
+
+
+
+
+
 
