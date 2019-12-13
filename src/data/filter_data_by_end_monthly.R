@@ -11,6 +11,7 @@ library(tidyverse)
 library(parallel)
 library(anytime)
 library(purrr)
+library(ggplot2)
 
 library(xts)
 library(zoo)
@@ -32,29 +33,51 @@ as.character(df[[1]]$period); as.character(df[[1]]$type);length(df)
 #                        })
 
 item_id <- rep(NA, length(df))
-n <- rep(NA, length(df))
+length <- rep(NA, length(df))
 end <- rep(NA, length(df))
 
 for (i in 1:length(df)){
   entry <- df[[i]]
   series <- entry$x
   item_id[i] <- df[[i]]$st
-  n[i] <- df[[i]]$n
+  length[i] <- df[[i]]$n
   end[i] <- time(series)[length(series)]
 }
 
-my_df <- data.frame(item_id=item_id, n=n, end_year=end)
+my_df <- data.frame(item_id=item_id, length=length, end=end)
 dim(my_df)
+head(my_df)
 
-# filter by year
-#df_asc$end_year=="2009"
-
-# to do: write function that counts the series by enddate!!!
+# Function that counts the series by enddate!!!
 my_df %>% 
-  count(end_year) %>% 
+  count(end) %>% 
   arrange(desc(n)) %>% 
-  head(10)
+  head(10) %>% 
+  data.frame()
 
+# subset 1: N=15700 - 5/2015
+my_df %>% 
+  filter(end > 2015.4) %>% 
+  filter(end < 2015.5) %>% 
+  count()
+
+# subset 2: N=1224 - 2014
+my_df %>% 
+  filter(end==2014) %>% 
+  count()
+
+# subset 2b: N=1807 - 03/2014
+my_df %>% 
+  filter(end>2014.2) %>% 
+  filter(end<2014.3) %>% 
+  count()
+
+# subset 3: 943
+my_df %>% 
+  filter(end > 2007.7) %>% 
+  filter(end < 2007.8) %>% 
+  count()
+  
 
 # filter and get top7
 my_df %>% 
@@ -62,17 +85,31 @@ my_df %>%
   filter(end_year <= 2020) %>% 
   arrange(desc(n)) 
 
-# get data ending 2015  
+# end_date distribution
 my_df %>% 
-  filter(end_year > 2015 & end_year < 2016) %>% 
-  dim()
+  count(end) %>%
+  filter(end <= 2020) %>% 
+  filter(n > 250) %>% 
+  data.frame()
+
+dim(df_end_n)
+head(df_end_n)
+str(df_end_n)
+summary(df_end_n)
+
+df_end_n$end <- round(df_end_n$end,2)
+
+ggplot(data=df_end_n, aes(x=end, y=n)) +
+  geom_histogram(stat="identity")
 
 my_df %>% 
-  filter(end_year == 2015+(5/12)) %>% 
-  head()
+  count(end) %>%
+  filter(end <= 2020) %>% 
+  ggplot(aes(end)) +
+  geom_histogram()
+
+### To do: Export data to JSONlines
+### To do: Own Benchmarks on the data
 
 
-
-
-# To do: Filter by multiple values and cut the end!
 
