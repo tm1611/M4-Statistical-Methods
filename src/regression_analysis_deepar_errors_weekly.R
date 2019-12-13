@@ -1,3 +1,7 @@
+##########################################
+# Regression Analysis from deepar errors #
+##########################################
+
 # intro
 rm(list=ls())
 graphics.off()
@@ -5,18 +9,15 @@ graphics.off()
 # libraries
 library(M4comp2018)
 library(forecast)
-
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
 library(tsfeatures)
-
 
 ### Weekly ###
 
 # Import DeepAR errors
-error_test_file <- read.csv("data/error_test_file.csv")
+error_deepar_weekly <- read.csv("data/m4_weekly_deepar_metrics_owa0919.csv")
 
 # Merge with ... features ... 
 
@@ -73,11 +74,6 @@ tsfeat_weekly <- bind_cols(
     Lambda = lambda) %>%
   mutate(Period = as.factor(Frequency))
 
-# add domain #
-# to do: function that takes out domain and item_id
-
-
-
 
 ####################################################################
 # Combine results
@@ -92,7 +88,7 @@ for (i in 1:length(df)){
 }
 
 df_a <- data.frame(item_id=sn, n=n, type=type, tsfeat_weekly)
-df_b <- error_test_file
+df_b <- error_deepar_weekly
 
 merged_df <- merge(x = df_a, y = df_b, by = "item_id")
 dim(merged_df)
@@ -124,7 +120,7 @@ df_processed[, purrr::map_lgl(df_processed, is.numeric)] %>%
   colMeans() %>% 
   round(4)
 
-head(df_processed[,-1])
+head(df_processed)
 
 #############################################################
 # Regressions # 
@@ -133,13 +129,17 @@ head(df_processed[,-1])
 summary(lm(formula = MASE ~ type + n, data=df_processed))
 summary(lm(formula = sMAPE ~ type + n, data=df_processed))
 
+# Check correlation with type and length, log-level
+summary(lm(formula = log(MASE) ~ type + log(n), data=df_processed))
+summary(lm(formula = log(sMAPE) ~ type + log(n), data=df_processed))
+
 # linear regression models tsfeatures 
 summary(lm(formula = MASE ~  n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
 summary(lm(formula = sMAPE ~ n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
 
 # linear regression models types plus tsfeatures
-summary(lm(formula = MASE ~ type + n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
-summary(lm(formula = sMAPE ~ type + n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+summary(lm(formula = log(MASE) ~ type + log(n) + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+summary(lm(formula = log(sMAPE) ~ type + log(n) + Entropy + Trend + ACF1 + Lambda, data=df_processed))
 
 
 
