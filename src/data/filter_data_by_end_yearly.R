@@ -1,4 +1,4 @@
-### Filter by end date ###
+### Filter by end date: yearly ###
 
 # pre
 rm(list=ls())
@@ -11,18 +11,17 @@ library(tidyverse)
 library(parallel)
 library(anytime)
 library(purrr)
-
 library(xts)
 library(zoo)
 
 
+####################
+##### Get Data #####
 data(M4)
 #df <- Filter(function(df) df$period=="Yearly" & df$type=="Other", M4)
 df <- Filter(function(df) df$period=="Yearly", M4)
 rm(M4)
 
-#df <- give_sam(df, 1)
-#df <- df[1:100]
 as.character(df[[1]]$period); as.character(df[[1]]$type);length(df)
 
 ### get end of data
@@ -43,40 +42,138 @@ for (i in 1:length(df)){
   end[i] <- time(series)[length(series)]
 }
 
-my_df <- data.frame(item_id=item_id, n=n, end_year=end)
-dim(my_df)
+df_prop <- data.frame(item_id=item_id, length=n, end=end)
+dim(df_prop)
 
-# filter by year
-#df_asc$end_year=="2009"
+df_prop %>% 
+  filter(end > 2019) %>% 
+  count()
+# Why 254 time series that end after 2019?
 
-# to do: write function that counts the series by enddate!!!
-my_df %>% 
-  count(end_year) %>%
-  filter(end_year <= 2020) %>% 
-  ggplot(aes(end_year, n)) +
-  geom_bar(stat="identity")
-
-# filter and get top7
-my_df %>% 
-  count(end_year) %>% 
-  filter(end_year <= 2020) %>% 
+df_prop %>% 
+  filter(end < 2020) %>% 
+  count(end) %>% 
+  filter(n > 100) %>% 
   arrange(desc(n)) %>% 
-  head(20)
+  data.frame() -> df_end_n
+  
+head(df_end_n, 10)
 
-# get data ending 1991, 2004, 2009  
+# distribution
+ggplot(df_end_n, aes(end, n)) +
+  geom_bar(stat="identity") # 3 peaks: 2009, 1991, 2004
+
+###################
+##### Subsets #####
+
+
+########################
+# Subset 1: 2009, N=6029 
+df_prop %>% 
+  filter(end == "2009") %>% 
+  count()
+
+df_prop %>% 
+  filter(end == "2009") %>% 
+  select(item_id) -> m4_yearly_end2009_ids
+
+target_list1 <- as.character(m4_yearly_end2009_ids[,])
+length(target_list1)
+
+m4_yearly_end2009 <- Filter(function(df) df$st %in% target_list1, df)
+length(m4_yearly_end2009)
+
+
+########################
+# Subset 2: 1991, N=3496
 my_df %>% 
-  filter(end_year == "1991") -> m4_yearly_end1991
+  filter(end_year == "1991") %>% 
+  count()
 
 my_df %>% 
-  filter(end_year == "2004") -> m4_yearly_end2004
+  filter(end_year == "1991") %>% 
+  select(item_id) -> m4_yearly_end1991_ids
+
+target_list2 <- as.character(m4_yearly_end1991_ids[,])
+length(target_list2)
+
+m4_yearly_end1991 <- Filter(function(df) df$st %in% target_list2, df)
+length(m4_yearly_end1991)
+
+#######################
+# Subset 3: 2004, N=984
+my_df %>% 
+  filter(end_year == "2004") %>% 
+  count()
 
 my_df %>% 
-  filter(end_year == "2009") -> m4_yearly_end2009
+  filter(end_year == "2004") %>% 
+  select(item_id) -> m4_yearly_end2004_ids
 
-dim(m4_yearly_end1991)
-dim(m4_yearly_end2004)
-dim(m4_yearly_end2009)
+target_list3 <- as.character(m4_yearly_end2004_ids[,])
+length(target_list3)
 
+m4_yearly_end2004 <- Filter(function(df) df$st %in% target_list3, df)
+length(m4_yearly_end2004)
 
-# To do: Filter by multiple values and cut the end!
+###############################
+##### Export data to JSON #####
+
+length(m4_yearly_end2009)
+length(m4_yearly_end1991)
+length(m4_yearly_end2004)
+
+ts_to_json <- function(idx, df, test_data=FALSE, true_dates=FALSE, domain_cat=FALSE){
+  train <- df[[idx]]$x
+  test <- df[[idx]]$xx
+  item_id <- df[[idx]]$st
+  
+  if (domain_cat == FALSE){
+    feat_static_cat <- list(idx)
+  } else {
+    feat_static_cat <- c(idx, as.numeric(df[[idx]]$type))
+  }
+  
+  if (true_dates == FALSE){
+    start <- "1750-01-01 00:00:00"
+  } else {
+    start <- paste0(as.character(as.Date(time(train))[1]), " 00:00:00") 
+  }
+  
+  if (test_data==FALSE){
+    target=train
+  } else {
+    target=c(train, test)
+  }
+  
+  my_list <- list(
+    start=start,
+    item_id=item_id,
+    target=target,
+    feat_static_cat = feat_static_cat
+  )
+  
+  json <- paste0(toJSON(my_list, auto_unbox=TRUE), "\n")
+  #json <- toJSON(my_list, auto_unbox=TRUE, pretty=FALSE)
+  
+  return(json)
+}
+
+####################################################
+####################################################
+
+# train file
+json1 <- map(1:length(m4_yearly_end2004), ts_to_json, m4_yearly_end2004, test_data=FALSE, true_dates=FALSE, domain_cat=FALSE)
+
+sink("data/json/m4_yearly_end2004_train.json")
+json1 <- lapply(json1, cat)
+sink()
+
+# test file
+json2 <- map(1:length(m4_yearly_end2004), ts_to_json, m4_yearly_end2004, test_data=TRUE, true_dates=FALSE, domain_cat=FALSE)
+
+sink("data/json/m4_yearly_end2004_test.json")
+json2 <- lapply(json2, cat)
+sink()
+
 
