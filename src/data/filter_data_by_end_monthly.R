@@ -10,9 +10,13 @@ library(jsonlite)
 library(tidyverse)
 library(parallel)
 library(anytime)
-library(purrr)
 library(xts)
 library(zoo)
+
+library(forecast)
+library(tsfeatures)
+
+source("src/my_utils.R")
 
 data(M4)
 #df <- Filter(function(df) df$period=="Yearly" & df$type=="Other", M4)
@@ -86,6 +90,61 @@ as.character(m4_monthly_end052015[[1]]$period)
 as.character(m4_monthly_end052015[[1]]$type)
 length(m4_monthly_end052015)
 
+# get etsarima-legaki for this df
+df1 <- m4_monthly_end052015
+length(df1)
+
+# intialize values
+fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df1), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+### forecasts ###
+for (i in 1:length(df1)){
+  n <- length(df1)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df1[[i]], ETSARIMA_LEGAKI)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+### Calculate accuracy measures ###
+as.character(df1[[1]]$period); as.character(df1[[1]]$type)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+# save results
+sn <- rep(NA, length(df1))
+n <- rep(NA, length(df1))
+
+for (i in 1:length(df1)){
+  sn[i] <- df1[[i]]$st
+  n[i] <- df1[[i]]$n
+}
+
+# save under correct names
+as.character(df1[[1]]$period); as.character(df1[[1]]$type);length(df1)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+ETSARIMA_Legaki <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End052015.csv")
+
+Res_table_quarterly <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(Res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End052015_table.csv")
+
+
+
+
+
+
+
 ##################################
 ##################################
 # subset 2: N=1807 - 03/2014
@@ -112,6 +171,65 @@ as.character(m4_monthly_end032014[[1]]$type)
 length(m4_monthly_end032014)
 
 
+# get etsarima-legaki for this df
+df2 <- m4_monthly_end032014
+length(df2)
+
+# intialize values
+fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df2), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+### forecasts ###
+for (i in 1:length(df2)){
+  n <- length(df2)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df2[[i]], ETSARIMA_LEGAKI)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+### Calculate accuracy measures ###
+as.character(df2[[1]]$period); as.character(df2[[1]]$type)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+# save results
+sn <- rep(NA, length(df2))
+n <- rep(NA, length(df2))
+
+for (i in 1:length(df2)){
+  sn[i] <- df2[[i]]$st
+  n[i] <- df2[[i]]$n
+}
+
+# save under correct names
+as.character(df2[[1]]$period); as.character(df2[[1]]$type);length(df2)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+
+ETSARIMA_Legaki <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End032014.csv")
+
+Res_table_quarterly <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(Res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End032014_table.csv")
+
+
+
+
+
+
+
+
+
+
 ##################################
 ##################################
 # subset 3: 943 - 09/2007
@@ -136,6 +254,60 @@ m4_monthly_end092007 <- Filter(function(df) df$st %in% target_list3, df)
 as.character(m4_monthly_end092007[[1]]$period)
 as.character(m4_monthly_end092007[[1]]$type)
 length(m4_monthly_end092007)
+
+
+# get etsarima-legaki for this df
+df3 <- m4_monthly_end092007
+length(df3)
+
+# intialize values
+fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df3), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+### forecasts ###
+for (i in 1:length(df3)){
+  n <- length(df3)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df3[[i]], ETSARIMA_LEGAKI)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+### Calculate accuracy measures ###
+as.character(df3[[1]]$period); as.character(df3[[1]]$type)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+# save results
+sn <- rep(NA, length(df3))
+n <- rep(NA, length(df3))
+
+for (i in 1:length(df3)){
+  sn[i] <- df3[[i]]$st
+  n[i] <- df3[[i]]$n
+}
+
+# save under correct names
+as.character(df3[[1]]$period); as.character(df3[[1]]$type);length(df3)
+my_accuracy(Total_sMAPE, Total_MASE)
+
+ETSARIMA_Legaki <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End092007.csv")
+
+Res_table_quarterly <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(Res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_End092007_table.csv")
+
+
+
+
 
 
 ##################################
