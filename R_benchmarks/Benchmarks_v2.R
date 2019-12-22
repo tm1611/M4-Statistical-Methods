@@ -4,11 +4,9 @@ graphics.off()
 
 library(M4comp2018)
 library(forecast)
-
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
 library(tsfeatures)
 
 source("src/my_utils.R")
