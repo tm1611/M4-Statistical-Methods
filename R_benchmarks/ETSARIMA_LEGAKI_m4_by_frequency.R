@@ -112,7 +112,7 @@ as.character(df[[1]]$period); as.character(df[[1]]$type);length(df)
 my_accuracy(Total_sMAPE, Total_MASE)
 
 ETSARIMA_Legaki <- data.frame(Series=sn, n=n, tsfeat=tsfeat, sMAPE=Total_sMAPE, MASE=Total_MASE)
-write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Yearly_Demographic.csv")
+write.csv(ETSARIMA_Legaki, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_Demographic.csv")
 
 Res_table_quarterly <- my_accuracy(Total_sMAPE, Total_MASE)
-write.csv(Res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Yearly_Demographic_table.csv")
+write.csv(Res_table_quarterly, file="results/M4_ETSARIMA_Legaki/ETSARIMA_Legaki_Monthly_Demographic_table.csv")
