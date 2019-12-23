@@ -14,12 +14,10 @@ library(dplyr)
 library(tidyr)
 library(tsfeatures)
 
-### Weekly ###
-
 # Import DeepAR errors
-error_deepar_weekly <- read.csv("data/m4_weekly_deepar_metrics_owa0919.csv")
+error_deepar_weekly <- read.csv("data/m4_weekly_id_deepar_error_metrics_owa0919.csv")
 
-# Merge with ... features ... 
+# Merge with tsfeatures
 
 data(M4)
 #df <- Filter(function(df) df$period=="Quarterly" & df$type=="Other", M4)
@@ -87,6 +85,7 @@ for (i in 1:length(df)){
   type[i] <- df[[i]]$type
 }
 
+# construct df
 df_a <- data.frame(item_id=sn, n=n, type=type, tsfeat_weekly)
 df_b <- error_deepar_weekly
 
@@ -104,7 +103,7 @@ merged_df %>%
 
 head(df_processed)
 
-# Add OWA m4 #
+# to do: Add OWA m4 #
 
 
 ############################
@@ -124,6 +123,13 @@ head(df_processed)
 
 #############################################################
 # Regressions # 
+# Check correlation with type
+summary(lm(formula = MASE ~ type, data=df_processed))
+summary(lm(formula = sMAPE ~ type, data=df_processed))
+
+# Check correlation with length
+summary(lm(formula = MASE ~ log(n), data=df_processed))
+summary(lm(formula = sMAPE ~ log(n), data=df_processed))
 
 # Check correlation with type and length
 summary(lm(formula = MASE ~ type + n, data=df_processed))
@@ -133,9 +139,17 @@ summary(lm(formula = sMAPE ~ type + n, data=df_processed))
 summary(lm(formula = log(MASE) ~ type + log(n), data=df_processed))
 summary(lm(formula = log(sMAPE) ~ type + log(n), data=df_processed))
 
+# Check correlation with type and length, log-level
+summary(lm(formula = MASE ~ type + log(n), data=df_processed))
+summary(lm(formula = sMAPE ~ type + log(n), data=df_processed))
+
 # linear regression models tsfeatures 
 summary(lm(formula = MASE ~  n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
 summary(lm(formula = sMAPE ~ n + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+
+# linear regression models tsfeatures 
+summary(lm(formula = MASE ~  log(n) + Entropy + Trend + ACF1 + Lambda, data=df_processed))
+summary(lm(formula = sMAPE ~ log(n) + Entropy + Trend + ACF1 + Lambda, data=df_processed))
 
 # linear regression models types plus tsfeatures
 summary(lm(formula = log(MASE) ~ type + log(n) + Entropy + Trend + ACF1 + Lambda, data=df_processed))
