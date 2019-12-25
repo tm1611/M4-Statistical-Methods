@@ -86,9 +86,59 @@ m4_quarterly_end2015q1 <- Filter(function(df) df$st %in% target_list1, df)
 length(m4_quarterly_end2015q1)
 
 
-# get etsarima-legaki for this df
+# get etsarima-legaki and benchmarks8 for this df
 df1 <- m4_quarterly_end2015q1
 length(df1)
+
+
+fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df1), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+#################
+### forecasts ###
+for (i in 1:length(df1)){
+  n <- length(df1)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df1[[i]], benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+sn <- rep(NA, length(df1))
+n <- rep(NA, length(df1))
+
+for (i in 1:length(df1)){
+  sn[i] <- df1[[i]]$st
+  n[i] <- df1[[i]]$n
+}
+
+################################
+### Save under correct names ###
+################################
+as.character(df1[[1]]$period); as.character(df1[[1]]$type);length(df1)
+my_accuracy(Total_sMAPE, Total_MASE)
+df1[[1]]$x
+
+results <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(results, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Quarterly_End2015q2.csv")
+
+results_table <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(results_table, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Q_End215q2_table.csv")
+
+
+
+
+
+
 
 # intialize values
 fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
@@ -165,6 +215,52 @@ length(m4_quarterly_end2013q1)
 df1 <- m4_quarterly_end2013q1
 length(df1)
 
+
+fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df1), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+#################
+### forecasts ###
+for (i in 1:length(df1)){
+  n <- length(df1)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df1[[i]], benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+sn <- rep(NA, length(df1))
+n <- rep(NA, length(df1))
+
+for (i in 1:length(df1)){
+  sn[i] <- df1[[i]]$st
+  n[i] <- df1[[i]]$n
+}
+
+################################
+### Save under correct names ###
+################################
+as.character(df1[[1]]$period); as.character(df1[[1]]$type);length(df1)
+my_accuracy(Total_sMAPE, Total_MASE)
+df1[[1]]$x
+
+results <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(results, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Quarterly_End2013q2.csv")
+
+results_table <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(results_table, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Q_End213q2_table.csv")
+
+
+
 # intialize values
 fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
 Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df1), ncol = length(fc_names))
@@ -238,6 +334,53 @@ length(m4_quarterly_end2003q3)
 # get etsarima-legaki for this df
 df1 <- m4_quarterly_end2003q3
 length(df1)
+
+
+fc_names <- c("Naive", "sNaive", "Naive2", "SES", "Holt", "Damped", "Theta", "Comb")
+Total_sMAPE <- Total_MASE <- matrix(data = NA, nrow = length(df1), ncol = length(fc_names))
+colnames(Total_sMAPE) <- colnames(Total_MASE) <- fc_names
+dim(Total_MASE)
+
+#################
+### forecasts ###
+for (i in 1:length(df1)){
+  n <- length(df1)
+  if(i%%5==0){
+    pct <- round((i/n)*100,2)
+    print(noquote(paste0(i, "/", n, " - ", pct, "%")))
+  } 
+  if(i%%n==0){
+    print("Done!")
+  }
+  
+  output <- wrapper_fun(df1[[i]], benchmarks)
+  Total_sMAPE[i,] <- output$sMAPE
+  Total_MASE[i,] <- output$MASE
+}
+
+sn <- rep(NA, length(df1))
+n <- rep(NA, length(df1))
+
+for (i in 1:length(df1)){
+  sn[i] <- df1[[i]]$st
+  n[i] <- df1[[i]]$n
+}
+
+################################
+### Save under correct names ###
+################################
+as.character(df1[[1]]$period); as.character(df1[[1]]$type);length(df1)
+my_accuracy(Total_sMAPE, Total_MASE)
+df1[[1]]$x
+
+results <- data.frame(Series=sn, n=n, sMAPE=Total_sMAPE, MASE=Total_MASE)
+write.csv(results, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Quarterly_End2003q4.csv")
+
+results_table <- my_accuracy(Total_sMAPE, Total_MASE)
+write.csv(results_table, file="results/M4_benchmarks8_Subsets/Benchmarks8_M4_Quarterly_End2003q4_table.csv")
+
+
+
 
 # intialize values
 fc_names <- c("Naive2", "ARIMA", "ETS", "ETSARIMA", "Legaki")
